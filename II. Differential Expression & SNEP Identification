@@ -1,0 +1,61 @@
+####################  DIFFERENTIAL EXPRESSION ANALYSIS ####################
+library(Seurat)
+library(dplyr)
+library(cowplot)
+library(ggplot2)
+library(patchwork)
+library(Matrix)
+library(data.table)
+library(tidyr)
+library(ggpubr)
+library(EnhancedVolcano) 
+library(VennDiagram)
+
+### Disease (cluster 0) vs Healthy (cluster 1)
+
+# KD_0 vs HC_1
+KD <- subset(Neutrophils, idents = c("KD_C0", "HC_C1"))
+KD_MARKERS <- FindMarkers(KD, ident.1 = "KD_C0", ident.2 = "HC_C1", logfc.threshold = 0.25, min.pct = 0.25)
+EnhancedVolcano(KD_MARKERS,
+                lab = rownames(KD_MARKERS),
+                x = "avg_log2FC",
+                y = "p_val_adj",
+                selectLab = c("CD177"), 
+                boxedLabels = TRUE,
+                pointSize = 4,
+                FCcutoff = 0.5,
+                pCutoff = 50e-3,
+                col=c('black', 'darkgreen', 'blue', 'red3'),
+                colAlpha = 1,
+                labSize = 5,
+                drawConnectors = TRUE,
+                title = "KD: Neutrophils C0 vs C1") #+ coord_flip()
+
+# MIS-C_0 vs HC_1
+MISC <- subset(Neutrophils, idents = c("MIS-C_C0", "MIS-C_C1"))
+MISC_MARKERS <- FindMarkers(MISC, ident.1 = "MIS-C_C0", ident.2 = "HC_C1", logfc.threshold = 0.25, min.pct = 0.25)
+EnhancedVolcano(MISC_MARKERS,
+                lab = rownames(MISC_MARKERS),
+                x = "avg_log2FC",
+                y = "p_val_adj",
+                selectLab = c("CD177"),
+                boxedLabels = TRUE,
+                pointSize = 4,
+                FCcutoff = 0.5,
+                pCutoff = 50e-3,
+                col=c('black', 'black', 'blue', 'red3'),
+                colAlpha = 1,
+                labSize = 5,
+                drawConnectors = TRUE,
+                title = "MIS-C: Neutrophils C0 vs C1") #+ coord_flip()
+
+### Identification OF the SNEP 
+
+KD_UP <- KD_MARKERS %>% dplyr::filter(cluster == "KD_C0") %>% dplyr::filter(avg_log2FC > 0.20) %>% dplyr::filter(p_val_adj < 0.05) %>%  dplyr::filter(pct.1 > 0.25) %>% arrange(desc(avg_log2FC))
+MISC_UP <- MISC_MARKERS %>% dplyr::filter(cluster == "MIS-C_C0") %>% dplyr::filter(avg_log2FC > 0.25) %>% dplyr::filter(p_val_adj < 0.05) %>%  dplyr::filter(pct.1 > 0.25) %>% arrange(desc(avg_log2FC))
+
+xx.1 <- list(K = sample(KD_UP), M = sample(MISC_UP))
+overlap <- calculate.overlap(xx.1)
+overlap$a3
+
+
