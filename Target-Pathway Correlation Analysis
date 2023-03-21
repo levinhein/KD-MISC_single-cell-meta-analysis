@@ -14,15 +14,155 @@ library(writexl)
 library(viridis)
 library(hrbrthemes)
 library(dittoSeq)
+library(ggcorrplot)
+library(ggcorrplot2)
 
-##### Neutrophil_Activation1
+##### AddModuleScore(): Calculation of signatures
+HCKDMISC <- AddModuleScore(HCKDMISC, features = "CD177", ctrl.size = 100, name = "CD177.Expression")
 
-my_comparisons <- list( c("HC", "DNV"), c("HC", "JIA"), c("HC", "PCD"), c("HC", "KD"), c("HC", "MIS-C"), c("HC", "KD_IVIG"), c("HC", "MIS-C_R") )
+##### Create a dataframe for all the expression signatures
+data <- HCKDMISC@meta.data[ , c("SPI1.Expression1", "CD177.Expression1", "SNEP.Expression1", "Neutrophil_Activation1", 
+                                "S100A12.Expression1", "FPR1.Expression1", "TSPO.Expression1", "CDA.Expression1", 
+                                "FCER1G.Expression1", "FCGR2A.Expression1", "AQP9.Expression1", "IL1R2.Expression1", 
+                                "ROS_RNS_Production1",  "Transendothelial.Migration1",   "NET.Formation1", "EPH.Ephrin.Signaling1", 
+                                "RHO_GTPase_Activate_NADPHox1", "Neutrophil.Degranulation1")]
+                                
+ head(data)
 
-png("Comparison-Hyperactivation-across-Diseases.png", width=6, height=4, res=1200, units='in') 
-ggviolin(Neutrophils@meta.data, x = "disease", y = "Neutrophil_Activation1", fill = "disease",
-         palette = c("white", "gray", "blue", "black", "red", "orange", "yellow", "magenta"),
-         add = "boxplot", add.params = list(fill = "white"))+
-  stat_compare_means(comparisons = my_comparisons, label = "p.signif")+ # Add significance levels
-  stat_compare_means(label.y = 2)                                      # Add global the p-value 
+corr <- cor(data)
+corr <- round(cor(data), 1)
+head(corr[, 1:15])
+head(corr[, 1:8])
+
+# Compute a matrix of correlation p-values
+p.mat <- cor_pmat(data)
+head(p.mat[, 1:8])
+
+png('Correlation-TF-NeutrophilActivation.png', width=7, height=6, res=1200, units='in')
+png('Correlation-TF-NeutrophilPathways.png', width=7, height=6, res=1200, units='in')
+# png('Correlation-TF-NeutrophilActivation.png', width=7, height=6, res=1200, units='in')
+# png('Correlation-TF-NeutrophilActivation.png', width=7, height=6, res=1200, units='in')
+# png('Correlation-TF-NeutrophilActivation.png', width=7, height=6, res=1200, units='in')
 dev.off()
+
+ggcorrplot(corr, hc.order = TRUE, outline.col = "white")
+# Plot the correlation matrix
+ggcorrplot(corr)
+ggcorrplot(corr, lab = T)
+ggcorrplot(corr, lab = T, type = "lower", hc.order = TRUE)
+ggcorrplot(corr, hc.order = TRUE, outline.col = "darkblue", lab = TRUE)
+ggcorrplot(corr, hc.order = TRUE, outline.col = "black", lab = F)
+ggcorrplot(corr, hc.order = TRUE, outline.col = "yellow")
+ggcorrplot(corr, hc.order = TRUE, type = "lower", lab = F)
+ggcorrplot(corr, hc.order = TRUE, type = "lower", lab = F, outline.color = "black")
+ggcorrplot(corr, hc.order = TRUE, type = "lower", outline.col = "red", lab = F, colors = c("red", "white", "black"))
+ggcorrplot(corr, hc.order = TRUE, type = "lower", outline.col = "red", lab = F, colors = c("red", "yellow", "black"))
+ggcorrplot(corr, hc.order = TRUE, type = "lower", outline.col = "red", lab = T, colors = c("blue", "yellow", "black"))
+ggcorrplot(corr, hc.order = TRUE, type = "lower", outline.col = "black", lab = F, colors = c("blue", "yellow", "red"))
+
+### TFs positively correlated to CD177, SNEP, and Neutrophil activation
+NFE2
+SPI
+GMFG
+HCLS1
+HMGB2
+
+
+##### TF AND PATHWAY CORRELATION
+head(Neutrophils)
+
+#### Put the data of specific columns into a dataframe 
+data <- Neutrophils@meta.data[19:31] # columns of SPI1, CD177, SNEP, and Neutrophil-Activation
+data <- Neutrophils@meta.data[19:44] # columns of TF genes, and pATHWAYS
+
+
+data <- Neutrophils@meta.data[ , c("POU2F2.Exp1", "TP53.Exp1", "GATA1.Exp1","CEBPB.Exp1", "NFKB1.Exp1","STAT5A.Exp1", "SRF.Exp1", "USF1.Exp1", 
+                                    "STAT3.Exp1", "ELF1.Exp1","ETS1.Exp1", "IRF4.Exp1",  
+                                    "SPI1.Exp1", "CD177.Exp1", "SNEP1",  
+                                    "Neutrophil_Activation1")]
+
+
+data <- Neutrophils@meta.data[ , c( "BCL6.Exp1", "NFE2.Exp1", "HMGB2.Exp1", "HCLS1.Exp1",
+                                    "GMFG.Exp1", "SPI1.Exp1", "CD177.Exp1", "SNEP1",  
+                                     "Neutrophil_Activation1")]
+
+data <- Neutrophils@meta.data[ , c(  "BCL6.Exp1", "NFE2.Exp1", "HMGB2.Exp1", "HCLS1.Exp1",
+                                    "SPI1.Exp1", "CD177.Exp1", "GMFG.Exp1","SNEP1",  
+                                    "ROS_RNS_Production1",  "Transendothelial.Migration1",   "NET.Formation1", "EPH.Ephrin.Signaling1", 
+                                    "RHO_GTPase_Activate_NADPHox1", "Neutrophil.Degranulation1", "Neutrophil_Activation1")] 
+
+head(data)
+
+
+corr <- cor(data)
+corr <- round(cor(data), 1)
+head(corr[, 1:15])
+head(corr[, 1:8])
+min(corr) #https://github.com/kassambara/ggcorrplot/issues/9
+max(corr) #https://github.com/kassambara/ggcorrplot/issues/9
+
+# Compute a matrix of correlation p-values
+p.mat <- cor_pmat(data)
+head(p.mat[, 1:1])
+
+p.mat <- subset(p.mat, p.mat$value > sig.level)
+p.mat <- subset(p.mat, p.mat$value <= sig.level & p.mat$value != 0)
+
+
+ggcorrplot(corr, type = "upper", p.mat = p.mat, lab = TRUE, digits = 2)
+ggcorrplot(corr, type = "lower", p.mat = p.mat)
+# Label significant coefficients with asterisks (*, default) denoting the significance level
+ggcorrplot.mixed(corr, upper = "ellipse", lower = "number", p.mat = p.mat, 
+                 insig = "label_sig", sig.lvl = c(0.05, 0.01, 0.001, 0.0001))
+
+png('Correlation-TF-Pathways.png', width=10, height=7, res=1200, units='in')
+png('Correlation-TF-Pathways-Closeup.png', width=10, height=7, res=1200, units='in')
+png('Correlation-TF-SPI1-Highlight.png', width=9, height=6, res=1200, units='in')
+png('Correlation-New-TFs-Highlight.png', width=9, height=5, res=1200, units='in')
+png('Correlation-DrugTargets.png', width=10, height=10, res=1200, units='in')
+
+# SAVE
+ggcorrplot(corr, hc.order = TRUE, outline.col = "gold")
+ggcorrplot(corr, hc.order = FALSE, outline.col = "gold")
+ggcorrplot(corr, hc.order = FALSE, outline.col = "gold", lab =T, digits = 2)
+ggcorrplot(corr, hc.order = FALSE, outline.col = "gold", lab =T, digits = 2, type = "lower", method = "circle")
+p <- ggcorrplot(corr, hc.order = FALSE, outline.col = "gold", lab =T, digits = 2, type = "lower")
+p <- ggcorrplot(corr, hc.order = TRUE, outline.col = "black", lab =T, digits = 2, type = "lower", tl.cex = 20)
+p <- ggcorrplot(corr, hc.order = TRUE, outline.col = "black", lab =T, digits = 2, type = "upper", tl.cex = 20)
+
+p <- ggcorrplot(corr, hc.order = FALSE, outline.col = "white", lab=F, colors = c("blue", "white", "red")) # full heatmap
+p <- ggcorrplot(corr, hc.order = TRUE, outline.col = "black", lab=T, type = "lower", colors = c("blue", "white", "red"), lab_size = 5)
+p + scale_fill_gradient2(limit = c(0.8,1), low = "blue", high =  "red", mid = "white", midpoint = 0.9)
+p + scale_fill_gradient2(limit = c(-0.5,1), low = "blue", high =  "red", mid = "white", midpoint = 0)
+p + scale_fill_gradient2(limit = c(0,1), low = "blue", high =  "red", mid = "white", midpoint = 0)
+p + scale_fill_gradient2(limit = c(0,0.7), low = "blue", high =  "red", mid = "white", midpoint = 0)
+p + scale_fill_gradient2(limit = c(0,0.7), low = "blue", high =  "red", mid = "white", midpoint = 0)
+
+
+png('Correlation-Matrix-TSPO-and-S100A12.png', width=6.75, height=6.75, res=1200, units='in')
+png('Correlation-Matrix-TSPO-and-S100A12-orange-to-red.png', width=6.75, height=6.75, res=1200, units='in')
+p + scale_fill_gradient2(limit = c(-0.75,0.75), low = "blue", high =  "red", mid = "white", midpoint = 0) +theme_classic() + theme(axis.text.x = element_text(size = 12, angle = 45, vjust = 1, hjust=1)) + theme(axis.text.y = element_text(size = 12))     
+p + scale_fill_gradient2(limit = c(-0.75,0.75), low = "blue", high =  "red", mid = "yellow", midpoint = 0) +theme_classic() + theme(axis.text.x = element_text(size = 12, angle = 45, vjust = 1, hjust=1)) + theme(axis.text.y = element_text(size = 12))     
+p + scale_fill_gradient2(limit = c(-0.75,0.75), low = "blue", high =  "red", mid = "orange", midpoint = 0) +theme_classic() + theme(axis.text.x = element_text(size = 12, angle = 45, vjust = 1, hjust=1)) + theme(axis.text.y = element_text(size = 12))     
+p + scale_fill_gradient2(limit = c(    0,0.75), low = "blue", high =  "red", mid = "orange", midpoint = 0) +theme_classic() + theme(axis.text.x = element_text(size = 12, angle = 45, vjust = 1, hjust=1)) + theme(axis.text.y = element_text(size = 12))     
+p + scale_fill_gradient2(limit = c(-0.1,0.75), low = "blue", high =  "yellow", mid = "black", midpoint = -0.2) +theme_classic() + theme(axis.text.x = element_text(size = 10, angle = 45, vjust = 0.5, hjust=0.5)) + theme(axis.text.y = element_text(size = 10))     
+dev.off()
+
+# Plot the correlation matrix
+ggcorrplot(corr)
+ggcorrplot(corr, lab = T)
+ggcorrplot(corr, lab = T, type = "lower", hc.order = TRUE)
+ggcorrplot(corr, hc.order = FALSE, outline.col = "darkblue", lab = TRUE)
+ggcorrplot(corr, hc.order = TRUE, outline.col = "black", lab = F, type = "lower")
+ggcorrplot(corr, hc.order = FALSE, type = "lower", lab = F, outline.col = "black")
+ggcorrplot(corr, hc.order = TRUE, type = "lower", lab = F, outline.color = "black")
+ggcorrplot(corr, hc.order = TRUE, type = "lower", outline.col = "black", lab = F, colors = c("blue", "yellow", "red"), digits=2)                               
+                                
+                                
+
+
+
+
+
+
+
