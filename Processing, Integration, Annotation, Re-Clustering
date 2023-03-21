@@ -161,12 +161,13 @@ TRY <- FindVariableFeatures(Neutrophils, selection.method = "vst", nfeatures = 2
         plot <- VariableFeaturePlot(TRY)
         LabelPoints(plot, points = top, repel = TRUE)
 
-# SCALE THE DATA BUT YOU SHOULD NOT regress anymore, otherwise it will affect the final sub-clustering
+# Scale the data
 TRY <- ScaleData(TRY, features = rownames(TRY), verbose = FALSE) 
 ElbowPlot(TRY)
 
+# Harmonization and Re-clustering
 Neutrophils <- RunPCA(TRY, verbose = FALSE, npcs = 3) # npcs = 3, npcs = 30  
-Neutrophils <- RunHarmony(Neutrophils, group.by.vars = "disease", theta = 1) #default = 2. Higher theta, more clusters
+Neutrophils <- RunHarmony(Neutrophils, group.by.vars = "disease", theta = 1) 
 Neutrophils <- RunUMAP(Neutrophils, reduction = "harmony", dims = 1:3)
 Neutrophils <- FindNeighbors(Neutrophils, reduction = "harmony", dims = 1:3)
 Neutrophils <- FindClusters(Neutrophils, resolution = c(0.1)) #default res = 0.8
@@ -179,52 +180,4 @@ DimPlot(Neutrophils)
       Idents(Neutrophils) <- "disease"
       Neutrophils$Disease_Cluster <- paste(Idents(Neutrophils), Neutrophils$seurat_clusters, sep = "_C")
       Idents(Neutrophils) <- "Disease_Cluster"
-
-
-####################  DIFFERENTIAL EXPRESSION ANALYSIS ####################
-
-
-### Disease (cluster 0) vs Healthy (cluster 1): KD_0 vs HC_1  and  MIS-C_0 vs HC_1
-KD <- subset(Neutrophils, idents = c("KD_C0", "HC_C1"))
-MISC <- subset(Neutrophils, idents = c("MIS-C_C0", "MIS-C_C1"))
-
-
-
-### DISCOVERY OF SNEP 
-### DISCOVERY OF SNEP 
-### DISCOVERY OF SNEP 
-head(KD)
-KD_MARKERS <- FindAllMarkers(KD, logfc.threshold = 0.20, min.pct = 0.25, only.pos = T)
-KD_MARKERS <- KD_MARKERS[, c(7, 1, 2, 3, 4, 5, 6)]
-write_xlsx(KD_MARKERS,"KD_C0-vs-HC_C1.xlsx")
-save(KD_MARKERS, file = "KD_MARKERS.Rdata")
-KD_UP<- KD_MARKERS %>% dplyr::filter(cluster == "KD_C0") %>% dplyr::filter(avg_log2FC > 0.20) %>% dplyr::filter(p_val_adj < 0.05) %>%  dplyr::filter(pct.1 > 0.25) %>% arrange(desc(avg_log2FC))
-write_xlsx(KD_UP,"KD_UP.xlsx")
-
-MISC_MARKERS <- FindAllMarkers(MISC, logfc.threshold = 0.20, min.pct = 0.25, only.pos = T)
-MISC_MARKERS <- MISC_MARKERS[, c(7, 1, 2, 3, 4, 5, 6)]
-write_xlsx(MISC_MARKERS,"MIS-C_C0-vs-HC_C1.xlsx")
-save(MISC_MARKERS, file = "MISC_MARKERS.Rdata")
-MISC_UP<- MISC_MARKERS %>% dplyr::filter(cluster == "MIS-C_C0") %>% dplyr::filter(avg_log2FC > 0.25) %>% dplyr::filter(p_val_adj < 0.05) %>%  dplyr::filter(pct.1 > 0.25) %>% arrange(desc(avg_log2FC))
-write_xlsx(MISC_UP,"MISC_UP.xlsx")
-
-rm(KD_MARKERS, MISC_MARKERS)
-
-VlnPlot(KD, "SPI1")
-
-#### FOR VOLCANO PLOT
-
-KD_MARKERS <- FindMarkers(KD, ident.1 = "KD_C0", logfc.threshold = 0.25, min.pct = 0.25)
-save(KD_MARKERS, file = "KD_MARKERS.Rdata")
-
-MISC_MARKERS <- FindMarkers(MISC, ident.1 = "MIS-C_C0", logfc.threshold = 0.25, min.pct = 0.25)
-save(MISC_MARKERS, file = "MISC_MARKERS.Rdata")
-
-
-
-
-
-
-
-
 
