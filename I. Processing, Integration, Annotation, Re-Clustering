@@ -14,28 +14,28 @@ library(writexl)
 
 #################### PRE-PROCESSING #################### 
 
-# Load data
+##### Load data
 Data1.data <- Read10X(data.dir = "/mnt/RAID_5/vincent/Project-Kawasaki_Disease/2021_DatafromGEO_GSE_GSE168732-KD-before-IVIG/P1/P1-BEFORE-IVIG")
 
-# Create Seurat object
+##### Create Seurat object
 Data1 <- CreateSeuratObject(counts = Data1.data, project = "Data1", min.cells = 3, min.features = 200)
 
-# Calculate % mitochondrial and ribosomal reads
+##### Calculate % mitochondrial and ribosomal reads
 Data1[["percent.mt"]] <- PercentageFeatureSet(Data1, pattern = "^MT-")
 Data1[["percent.hb"]] <- PercentageFeatureSet(Data1, pattern = "^HB") # For 10% hemoglobin: https://insight.jci.org/articles/view/135678#SEC4
 
-# Visualize QC metrics as a violin plot
+##### Visualize QC metrics as a violin plot
 VlnPlot(Data1, features = c("nFeature_RNA", "nCount_RNA", "percent.mt", "percent.hb"), ncol = 4)
 Data1 <- subset(Data1, subset = nFeature_RNA > 200 & nFeature_RNA < 5000 & nCount_RNA < 20000  & percent.mt < 15 & percent.hb < 5)
 
-#Removal of Confounding Genes
+##### Removal of Confounding Genes
 Data1 <- Data1[!grepl("^MT-", rownames(Data1)), ] 
 Data1 <- Data1[!grepl("MALAT1", rownames(Data1)), ]
 Data1 <- Data1[!grepl("XIST", rownames(Data1)), ]
 Data1 <- Data1[!grepl("RSP4Y1", rownames(Data1)), ]
 Data1 <- Data1[grep("^RP[SL][[:digit:]]|^RPLP[[:digit:]]|^RPSA", rownames(Data1), value = T, invert = T), ]
 
-#Doublet Removal (multiplet rates obtained from: https://nbisweden.github.io/workshop-scRNAseq/labs/compiled/seurat/seurat_01_qc.html#Predict_doublets)
+##### Doublet Removal (multiplet rates obtained from: https://nbisweden.github.io/workshop-scRNAseq/labs/compiled/seurat/seurat_01_qc.html#Predict_doublets)
 suppressMessages(require(DoubletFinder))
 
 Data1 <- NormalizeData(Data1)
@@ -52,7 +52,7 @@ bcmvn <- find.pK(sweep.stats)
 ## define the expected number of doublets
 nExp <- round(ncol(A) * 0.004)
 
-# Doublet calculation
+## Doublet calculation
 A <- doubletFinder_v3(A, pN = 0.25, pK = 0.09, nExp = nExp, PCs = 1:10)
 
 ### Name of the DF prediction can change, so extract the correct column name.
@@ -60,15 +60,15 @@ DF.name = colnames(A@meta.data)[grepl("DF.classification", colnames(A@meta.data)
 cowplot::plot_grid(ncol = 2, DimPlot(A, group.by = "orig.ident") + NoAxes(),
                    DimPlot(A, group.by = DF.name) + NoAxes())
 
-### Remove all predicted doublets from our data.
+## Remove all predicted doublets from our data.
 A = A[, A@meta.data[, DF.name] == "Singlet"]
 any(A@meta.data=="Doublet")
 head(A)
 
-# Confirm that there's no doublet in each data
+## Confirm that there's no doublet in each data
 any(KD_A7@meta.data=="Doublet")
 
-# Keep all data in a list
+## Keep all data in a list
 All_Data.list <- list(Data1, DataN) # All datasets 1-N included 
 
 
@@ -85,18 +85,18 @@ for (i in 1:length (KD.list)) {
   KD.list[[i]] <-CellCycleScoring(KD.list[[i]], s.features = s.genes, g2m.features = g2m.genes, set.ident = TRUE)
 }
 
-### MERGE ALL THE INDIVIDUAL DATASETS
+##### MERGE ALL THE INDIVIDUAL DATASETS
 KD.merged <- merge(KD.list[[1]], KD.list[-1], project = "KD Project") 
 
 # Need to run the  Scaldedata and RunPCA again because after you merge it will be erased (merging erases the ...) See merge() 
 KD.merged <-NormalizeData(KD.merged, verbose = TRUE)
 KD.merged <-FindVariableFeatures(KD.merged, selection.method = "vst", nfeatures=3000, verbose = TRUE) # nFeatures = all.genes ...or features = VariableFeatures(object = pbmc)
      
- 
+##### Sacale data and RunPCA 
 TRY <-ScaleData(KD.merged, features = rownames(KD.merged), verbose = TRUE) # scale all genes!!!!! ... vars.to.regress = c("dataset", "disease", "stage")
 TRY <-RunPCA(TRY, verbose = TRUE) ### This will use the nFeatures=3000 from before ... or you can set: features = VariableFeatures(object = pbmc)
       
-### DIMENSIONALITY
+##### DIMENSIONALITY
 KD.filtered <- RunUMAP(TRY, dims = 1:30, reduction = 'pca') 
     DimPlot(KD.filtered, reduction = 'umap', group.by = 'disease')
     DimPlot(KD.filtered, reduction = 'umap', split.by = 'disease')
@@ -105,7 +105,7 @@ KD.filtered <- RunUMAP(TRY, dims = 1:30, reduction = 'pca')
 ####################  HARMONY: INTEGRATION ####################
 library("harmony")
 
-# Integration and harmonization
+##### Integration and harmonization
 KD.harmony <- KD.filtered %>%
   RunHarmony(group.by.vars = 'orig.ident', plot_convergence = FALSE, kmeans_init_nstart=20, kmeans_init_iter_max=100)
 
@@ -113,7 +113,7 @@ KD.harmony@reductions
 KD.harmony.embed <- Embeddings(KD.harmony, "harmony")
 KD.harmony.embed[1:10,1:10] # checking the first 10 harmony components
 
-## Do UMAP and clustering using ** Harmony embeddings instead of PCA **
+##### Do UMAP and clustering using ** Harmony embeddings instead of PCA **
 KD.harmony <- KD.harmony %>%
   RunUMAP(reduction = 'harmony', dims = 1:30) %>%
   FindNeighbors(reduction = "harmony", dims = 1:30) %>%
@@ -122,11 +122,11 @@ KD.harmony <- KD.harmony %>%
 ####################  SIGNACX: CELLTYPE ANNOTATION ####################
 library(SignacX)
 
-# Run Signac FAST 
+##### Run Signac FAST 
 labels_fast <- SignacFast(KD.harmony)
 celltypes = GenerateLabels(labels_fast, E = KD.harmony)
 
-# All Cellstates
+##### All Cellstates
 KD.harmony <- AddMetaData(KD.harmony, metadata = celltypes$CellStates, col.name = "cellstates")
 KD.harmony <- SetIdent(KD.harmony, value = "cellstates")
 
@@ -152,30 +152,30 @@ library(harmony)
 library(ggeasy)
 
 
-# Subset neutrophils
+##### Subset neutrophils
 Neutrophils <- subset(KD.harmony, idents = "Neutrophils")
 
-# Find Variable Features again
+##### Find Variable Features again
 TRY <- FindVariableFeatures(Neutrophils, selection.method = "vst", nfeatures = 2000)
         top <- head(VariableFeatures(TRY), 30)
         plot <- VariableFeaturePlot(TRY)
         LabelPoints(plot, points = top, repel = TRUE)
 
-# Scale the data
+##### Scale the data
 TRY <- ScaleData(TRY, features = rownames(TRY), verbose = FALSE) 
 ElbowPlot(TRY)
 
-# Harmonization and Re-clustering
+##### Harmonization and Re-clustering
 Neutrophils <- RunPCA(TRY, verbose = FALSE, npcs = 3) # npcs = 3, npcs = 30  
 Neutrophils <- RunHarmony(Neutrophils, group.by.vars = "disease", theta = 1) 
 Neutrophils <- RunUMAP(Neutrophils, reduction = "harmony", dims = 1:3)
 Neutrophils <- FindNeighbors(Neutrophils, reduction = "harmony", dims = 1:3)
 Neutrophils <- FindClusters(Neutrophils, resolution = c(0.1)) #default res = 0.8
 
-# UMAP Visualization showing 4 clusters (0, 1, 2, 3) 
+##### UMAP Visualization showing 4 clusters (0, 1, 2, 3) 
 DimPlot(Neutrophils)
 
-# Grouping: Disease_Cluster
+##### Grouping: Disease_Cluster
       levels(Neutrophils)
       Idents(Neutrophils) <- "disease"
       Neutrophils$Disease_Cluster <- paste(Idents(Neutrophils), Neutrophils$seurat_clusters, sep = "_C")
