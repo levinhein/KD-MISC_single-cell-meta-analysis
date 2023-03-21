@@ -8,34 +8,11 @@ library(igraph)
 theme_set(theme_cowplot())
 set.seed(12345)
 
-# Subsetting only the neutrophils from HC, KD, and MIS-C 
+
+##### Subsetting only the neutrophils from HC, KD, and MIS-C 
 Idents(Neutrophils) <- "disease"
 HCKDMISC <- subset(Neutrophils, idents = c("HC", "KD", "MIS-C"))
 
-
-### Part 1
-DimPlot(Neutrophils, group.by='RNA_snn_res.0.1', label=TRUE) +
-  umap_theme() + ggtitle('Neutrophil Sub-clusters') + NoLegend()
-
-
-# load(file = "HCKDMISC.Rdata")
-# head(HCKDMISC)
-
-Idents(Neutrophils) <- "disease"
-HCKDMISC <- subset(Neutrophils, idents = c("HC", "KD", "MIS-C"))
-
-
-rm(Neutrophils)
-
-Idents(HCKDMISC) <- "RNA_snn_res.0.1"
-head(HCKDMISC)
-
-DimPlot(HCKDMISC, split.by = "disease")
-FeaturePlot(HCKDMISC, "CD177", max.cutoff = "q90")
-
-
-##### SET UP SEURAT OBJECT FOR WGCNA
-##### SET UP SEURAT OBJECT FOR WGCNA
 ##### SET UP SEURAT OBJECT FOR WGCNA
 Idents(HCKDMISC) <- "RNA_snn_res.0.1"
 
