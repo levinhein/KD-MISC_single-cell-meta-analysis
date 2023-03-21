@@ -14,40 +14,211 @@ library(writexl)
 
 #################### PRE-PROCESSING #################### 
 
-#Read scRNAseq expression data
+# Load data
+Data1.data <- Read10X(data.dir = "/mnt/RAID_5/vincent/Project-Kawasaki_Disease/2021_DatafromGEO_GSE_GSE168732-KD-before-IVIG/P1/P1-BEFORE-IVIG")
 
-MISC1.data <- Read10X(data.dir = "/mnt/RAID_5/vincent/Project-Kawasaki_Disease/2021_DatafromGEO_GSE_GSE166489-MISC-S/S1(P1.1)/")
-rownames(x = MISC1.data[["Antibody Capture"]]) <- gsub(pattern = "_[control_]*TotalSeqB", replacement = "", 
-                                                      x = rownames(x = MISC1.data[["Antibody Capture"]]))
-                                                      
-# Create Seurat object. 
-MISC1 <- CreateSeuratObject(counts = MISC1.data[["Gene Expression"]], project = "MIS-C1", min.cells = 3, min.features = 200)
+# Create Seurat object
+Data1 <- CreateSeuratObject(counts = Data1.data, project = "Data1", min.cells = 3, min.features = 200)
 
-#Standard pre-processing workflow
-MISC1[["percent.mt"]] <- PercentageFeatureSet(MISC1, pattern = "^MT-") #NKD <- NKD[!grepl("^MT-", rownames(NKD)), ]
-MISC1[["percent.hb"]] <- PercentageFeatureSet(MISC1, pattern = "^HB") # For 10% hemoglobin: https://insight.jci.org/articles/view/135678#SEC4
+# Calculate % mitochondrial and ribosomal reads
+Data1[["percent.mt"]] <- PercentageFeatureSet(Data1, pattern = "^MT-")
+Data1[["percent.hb"]] <- PercentageFeatureSet(Data1, pattern = "^HB") # For 10% hemoglobin: https://insight.jci.org/articles/view/135678#SEC4
 
 # Visualize QC metrics as a violin plot
-VlnPlot(MISC1, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 4)
-MISC1 <- subset(MISC1, subset = nFeature_RNA > 200 & nFeature_RNA < 5000 & nCount_RNA < 20000  & percent.mt < 15 & percent.hb < 5)
+VlnPlot(Data1, features = c("nFeature_RNA", "nCount_RNA", "percent.mt", "percent.hb"), ncol = 4)
+Data1 <- subset(Data1, subset = nFeature_RNA > 200 & nFeature_RNA < 5000 & nCount_RNA < 20000  & percent.mt < 15 & percent.hb < 5)
 
-#Removal of MALAT1, XIST, RSP4Y1
-MISC1 <- MISC1[!grepl("^MT-", rownames(MISC1)), ] #MT genes are already removed but the column of its percent.mt values remain
-MISC1 <- MISC1[!grepl("MALAT1", rownames(MISC1)), ]
-MISC1 <- MISC1[!grepl("XIST", rownames(MISC1)), ]
-MISC1 <- MISC1[!grepl("RSP4Y1", rownames(MISC1)), ]
-MISC1 <- MISC1[grep("^RP[SL][[:digit:]]|^RPLP[[:digit:]]|^RPSA", rownames(MISC1), value = T, invert = T), ]
-rm(MISC1.data)
+#Removal of Confounding Genes
+Data1 <- Data1[!grepl("^MT-", rownames(Data1)), ] 
+Data1 <- Data1[!grepl("MALAT1", rownames(Data1)), ]
+Data1 <- Data1[!grepl("XIST", rownames(Data1)), ]
+Data1 <- Data1[!grepl("RSP4Y1", rownames(Data1)), ]
+Data1 <- Data1[grep("^RP[SL][[:digit:]]|^RPLP[[:digit:]]|^RPSA", rownames(Data1), value = T, invert = T), ]
+
+#Doublet Removal (multiplet rates obtained from: https://nbisweden.github.io/workshop-scRNAseq/labs/compiled/seurat/seurat_01_qc.html#Predict_doublets)
+suppressMessages(require(DoubletFinder))
+
+Data1 <- NormalizeData(Data1)
+Data1 <- FindVariableFeatures(Data1, selection.method = "vst", nfeatures = 3000) # this should be all genes!!!
+Data1 <- ScaleData(Data1)
+Data1 <- RunPCA(Data1)
+Data1 <- RunUMAP(Data1, dims = 1:10)
+
+## Can run parameter optimization with paramSweep
+sweep.res <- paramSweep_v3(A)
+sweep.stats <- summarizeSweep(sweep.res, GT = FALSE)
+bcmvn <- find.pK(sweep.stats)
+
+## define the expected number of doublets
+nExp <- round(ncol(A) * 0.004)
+
+# Doublet calculation
+A <- doubletFinder_v3(A, pN = 0.25, pK = 0.09, nExp = nExp, PCs = 1:10)
+
+### Name of the DF prediction can change, so extract the correct column name.
+DF.name = colnames(A@meta.data)[grepl("DF.classification", colnames(A@meta.data))]
+cowplot::plot_grid(ncol = 2, DimPlot(A, group.by = "orig.ident") + NoAxes(),
+                   DimPlot(A, group.by = DF.name) + NoAxes())
+
+### Remove all predicted doublets from our data.
+A = A[, A@meta.data[, DF.name] == "Singlet"]
+any(A@meta.data=="Doublet")
+head(A)
+
+# Confirm that there's no doublet in each data
+any(KD_A7@meta.data=="Doublet")
+
+# Keep all data in a list
+All_Data.list <- list(Data1, DataN) # All datasets 1-N included 
+
+
+###########  CELL CYCLE SCORING
+s.genes <- cc.genes$s.genes
+g2m.genes <- cc.genes$g2m.genes
+
+# ### Normalization, Scaling, Cellcycle Scoring: https://satijalab.org/seurat/articles/cell_cycle_vignette.html
+for (i in 1:length (KD.list)) {
+  KD.list[[i]] <-NormalizeData(KD.list[[i]], verbose = TRUE)
+  KD.list[[i]] <-FindVariableFeatures(KD.list[[i]], selection.method = "vst", nfeatures=3000, verbose = TRUE)
+  KD.list[[i]] <-ScaleData(KD.list[[i]], features = rownames(KD.list[[i]]), verbose = TRUE)
+  KD.list[[i]] <-RunPCA(KD.list[[i]], verbose = TRUE)
+  KD.list[[i]] <-CellCycleScoring(KD.list[[i]], s.features = s.genes, g2m.features = g2m.genes, set.ident = TRUE)
+}
+
+### MERGE ALL THE INDIVIDUAL DATASETS
+KD.merged <- merge(KD.list[[1]], KD.list[-1], project = "KD Project") 
+
+# Need to run the  Scaldedata and RunPCA again because after you merge it will be erased (merging erases the ...) See merge() 
+KD.merged <-NormalizeData(KD.merged, verbose = TRUE)
+KD.merged <-FindVariableFeatures(KD.merged, selection.method = "vst", nfeatures=3000, verbose = TRUE) # nFeatures = all.genes ...or features = VariableFeatures(object = pbmc)
+     
+ 
+TRY <-ScaleData(KD.merged, features = rownames(KD.merged), verbose = TRUE) # scale all genes!!!!! ... vars.to.regress = c("dataset", "disease", "stage")
+TRY <-RunPCA(TRY, verbose = TRUE) ### This will use the nFeatures=3000 from before ... or you can set: features = VariableFeatures(object = pbmc)
+      
+### DIMENSIONALITY
+KD.filtered <- RunUMAP(TRY, dims = 1:30, reduction = 'pca') 
+    DimPlot(KD.filtered, reduction = 'umap', group.by = 'disease')
+    DimPlot(KD.filtered, reduction = 'umap', split.by = 'disease')
+
+
+####################  HARMONY: INTEGRATION ####################
+library("harmony")
+
+# Integration and harmonization
+KD.harmony <- KD.filtered %>%
+  RunHarmony(group.by.vars = 'orig.ident', plot_convergence = FALSE, kmeans_init_nstart=20, kmeans_init_iter_max=100)
+
+KD.harmony@reductions
+KD.harmony.embed <- Embeddings(KD.harmony, "harmony")
+KD.harmony.embed[1:10,1:10] # checking the first 10 harmony components
+
+## Do UMAP and clustering using ** Harmony embeddings instead of PCA **
+KD.harmony <- KD.harmony %>%
+  RunUMAP(reduction = 'harmony', dims = 1:30) %>%
+  FindNeighbors(reduction = "harmony", dims = 1:30) %>%
+  FindClusters(resolution = 0.5)
+
+####################  SIGNACX: CELLTYPE ANNOTATION ####################
+library(SignacX)
+
+# Run Signac FAST 
+labels_fast <- SignacFast(KD.harmony)
+celltypes = GenerateLabels(labels_fast, E = KD.harmony)
+
+# All Cellstates
+KD.harmony <- AddMetaData(KD.harmony, metadata = celltypes$CellStates, col.name = "cellstates")
+KD.harmony <- SetIdent(KD.harmony, value = "cellstates")
+
+####################  NEUTROPHIL RE-CLUSTERING AND RE-HARMONIZATION ####################
+
+
+library(Seurat)
+library(dplyr)
+library(cowplot)
+library(ggplot2)
+library(patchwork)
+library(Matrix)
+library(data.table)
+library(tidyr)
+library(ggpubr)
+library(tidyverse)
+library(RColorBrewer)
+library(writexl)
+library(viridis)
+library(hrbrthemes)
+library(devtools)
+library(harmony)
+library(ggeasy)
+
+
+# Subset neutrophils
+Neutrophils <- subset(KD.harmony, idents = "Neutrophils")
+
+# Find Variable Features again
+TRY <- FindVariableFeatures(Neutrophils, selection.method = "vst", nfeatures = 2000)
+        top <- head(VariableFeatures(TRY), 30)
+        plot <- VariableFeaturePlot(TRY)
+        LabelPoints(plot, points = top, repel = TRUE)
+
+# SCALE THE DATA BUT YOU SHOULD NOT regress anymore, otherwise it will affect the final sub-clustering
+TRY <- ScaleData(TRY, features = rownames(TRY), verbose = FALSE) 
+ElbowPlot(TRY)
+
+Neutrophils <- RunPCA(TRY, verbose = FALSE, npcs = 3) # npcs = 3, npcs = 30  
+Neutrophils <- RunHarmony(Neutrophils, group.by.vars = "disease", theta = 1) #default = 2. Higher theta, more clusters
+Neutrophils <- RunUMAP(Neutrophils, reduction = "harmony", dims = 1:3)
+Neutrophils <- FindNeighbors(Neutrophils, reduction = "harmony", dims = 1:3)
+Neutrophils <- FindClusters(Neutrophils, resolution = c(0.1)) #default res = 0.8
+
+# UMAP Visualization showing 4 clusters (0, 1, 2, 3) 
+DimPlot(Neutrophils)
+
+# Grouping: Disease_Cluster
+      levels(Neutrophils)
+      Idents(Neutrophils) <- "disease"
+      Neutrophils$Disease_Cluster <- paste(Idents(Neutrophils), Neutrophils$seurat_clusters, sep = "_C")
+      Idents(Neutrophils) <- "Disease_Cluster"
+
+
+####################  DIFFERENTIAL EXPRESSION ANALYSIS ####################
+
+
+### Disease (cluster 0) vs Healthy (cluster 1): KD_0 vs HC_1  and  MIS-C_0 vs HC_1
+KD <- subset(Neutrophils, idents = c("KD_C0", "HC_C1"))
+MISC <- subset(Neutrophils, idents = c("MIS-C_C0", "MIS-C_C1"))
 
 
 
+### DISCOVERY OF SNEP 
+### DISCOVERY OF SNEP 
+### DISCOVERY OF SNEP 
+head(KD)
+KD_MARKERS <- FindAllMarkers(KD, logfc.threshold = 0.20, min.pct = 0.25, only.pos = T)
+KD_MARKERS <- KD_MARKERS[, c(7, 1, 2, 3, 4, 5, 6)]
+write_xlsx(KD_MARKERS,"KD_C0-vs-HC_C1.xlsx")
+save(KD_MARKERS, file = "KD_MARKERS.Rdata")
+KD_UP<- KD_MARKERS %>% dplyr::filter(cluster == "KD_C0") %>% dplyr::filter(avg_log2FC > 0.20) %>% dplyr::filter(p_val_adj < 0.05) %>%  dplyr::filter(pct.1 > 0.25) %>% arrange(desc(avg_log2FC))
+write_xlsx(KD_UP,"KD_UP.xlsx")
 
+MISC_MARKERS <- FindAllMarkers(MISC, logfc.threshold = 0.20, min.pct = 0.25, only.pos = T)
+MISC_MARKERS <- MISC_MARKERS[, c(7, 1, 2, 3, 4, 5, 6)]
+write_xlsx(MISC_MARKERS,"MIS-C_C0-vs-HC_C1.xlsx")
+save(MISC_MARKERS, file = "MISC_MARKERS.Rdata")
+MISC_UP<- MISC_MARKERS %>% dplyr::filter(cluster == "MIS-C_C0") %>% dplyr::filter(avg_log2FC > 0.25) %>% dplyr::filter(p_val_adj < 0.05) %>%  dplyr::filter(pct.1 > 0.25) %>% arrange(desc(avg_log2FC))
+write_xlsx(MISC_UP,"MISC_UP.xlsx")
 
+rm(KD_MARKERS, MISC_MARKERS)
 
+VlnPlot(KD, "SPI1")
 
+#### FOR VOLCANO PLOT
 
+KD_MARKERS <- FindMarkers(KD, ident.1 = "KD_C0", logfc.threshold = 0.25, min.pct = 0.25)
+save(KD_MARKERS, file = "KD_MARKERS.Rdata")
 
-
+MISC_MARKERS <- FindMarkers(MISC, ident.1 = "MIS-C_C0", logfc.threshold = 0.25, min.pct = 0.25)
+save(MISC_MARKERS, file = "MISC_MARKERS.Rdata")
 
 
 
