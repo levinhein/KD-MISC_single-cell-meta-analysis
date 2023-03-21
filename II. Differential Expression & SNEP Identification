@@ -49,7 +49,7 @@ EnhancedVolcano(MISC_MARKERS,
                 drawConnectors = TRUE,
                 title = "MIS-C: Neutrophils C0 vs C1") #+ coord_flip()
 
-### Identification OF the SNEP 
+### Identification of the SNEP 
 
 KD_UP <- KD_MARKERS %>% dplyr::filter(cluster == "KD_C0") %>% dplyr::filter(avg_log2FC > 0.20) %>% dplyr::filter(p_val_adj < 0.05) %>%  dplyr::filter(pct.1 > 0.25) %>% arrange(desc(avg_log2FC))
 MISC_UP <- MISC_MARKERS %>% dplyr::filter(cluster == "MIS-C_C0") %>% dplyr::filter(avg_log2FC > 0.25) %>% dplyr::filter(p_val_adj < 0.05) %>%  dplyr::filter(pct.1 > 0.25) %>% arrange(desc(avg_log2FC))
