@@ -3,25 +3,23 @@ Analysis scripts for the manuscript "Single-cell Meta-analysis Of Neutrophil Act
 
 # Folder Structure
 
-# Figure 1
+# 1. Processing, Integration, Annotation, Re-Clustering
 
 
-# Figure 2
+# 2. Differential Expression & SNEP Identification
 
 
-
-# Figure 3
-
-
-
-# Figure 4
+# 3. Single-cell hdWGCNA
 
 
 
-# Figure 5
+# 4. Plots: Violin, Pie chart, Bar, Box
 
 
 
-# Figure 6
+# 5. Target-Pathway Correlation Analysis
+
+
+
 
 
