@@ -14,7 +14,7 @@ Analysis and plotting scripts to reproduce Figure 3A, B
 Analysis and plotting scripts to reproduce Figure 5A, B, C, E
 
 
-# 4. Plots: Violin, Pie chart, Bar, Box
+# 4. Plots: Violin, Pie chart, Bar, Box, Scatter plots
 Analysis and plotting scripts to reproduce Figure 1 E, F, G, H
 Analysis and plotting scripts to reproduce Figure 2 D, F, H, I, J, K, L
 Analysis and plotting scripts to reproduce Figure 3 F, N, O, P, Q
