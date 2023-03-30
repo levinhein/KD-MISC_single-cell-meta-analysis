@@ -98,11 +98,11 @@ KD.merged <-NormalizeData(KD.merged, verbose = TRUE)
 KD.merged <-FindVariableFeatures(KD.merged, selection.method = "vst", nfeatures=3000, verbose = TRUE) # nFeatures = all.genes ...or features = VariableFeatures(object = pbmc)
      
 ##### Sacale data and RunPCA 
-TRY <-ScaleData(KD.merged, features = rownames(KD.merged), verbose = TRUE) # scale all genes!!!!! ... vars.to.regress = c("dataset", "disease", "stage")
-TRY <-RunPCA(TRY, verbose = TRUE) ### This will use the nFeatures=3000 from before ... or you can set: features = VariableFeatures(object = pbmc)
+KD.merged <-ScaleData(KD.merged, features = rownames(KD.merged), verbose = TRUE) # scale all genes!!!!! ... vars.to.regress = c("dataset", "disease", "stage")
+KD.merged <-RunPCA(KD.merged, verbose = TRUE) ### This will use the nFeatures=3000 from before ... or you can set: features = VariableFeatures(object = pbmc)
       
 ##### DIMENSIONALITY
-KD.filtered <- RunUMAP(TRY, dims = 1:30, reduction = 'pca') 
+KD.filtered <- RunUMAP(KD.merged, dims = 1:30, reduction = 'pca') 
     DimPlot(KD.filtered, reduction = 'umap', group.by = 'disease')
     DimPlot(KD.filtered, reduction = 'umap', split.by = 'disease')
 
@@ -141,21 +141,21 @@ KD.harmony <- SetIdent(KD.harmony, value = "cellstates")
 Neutrophils <- subset(KD.harmony, idents = "Neutrophils")
 
 ##### Find Variable Features again
-TRY <- FindVariableFeatures(Neutrophils, selection.method = "vst", nfeatures = 2000)
-        top <- head(VariableFeatures(TRY), 30)
-        plot <- VariableFeaturePlot(TRY)
+Neutrophils <- FindVariableFeatures(Neutrophils, selection.method = "vst", nfeatures = 2000)
+        top <- head(VariableFeatures(Neutrophils), 30)
+        plot <- VariableFeaturePlot(Neutrophils)
         LabelPoints(plot, points = top, repel = TRUE)
 
 ##### Scale the data
-TRY <- ScaleData(TRY, features = rownames(TRY), verbose = FALSE) 
-ElbowPlot(TRY)
+Neutrophils <- ScaleData(Neutrophils, features = rownames(Neutrophils), verbose = FALSE) 
+ElbowPlot(Neutrophils)
 
 ##### Harmonization and Re-clustering
-Neutrophils <- RunPCA(TRY, verbose = FALSE, npcs = 3) # npcs = 3, npcs = 30  
+Neutrophils <- RunPCA(Neutrophils, verbose = FALSE, npcs = 3) # npcs = 3, npcs = 30  
 Neutrophils <- RunHarmony(Neutrophils, group.by.vars = "disease", theta = 1) 
 Neutrophils <- RunUMAP(Neutrophils, reduction = "harmony", dims = 1:3)
 Neutrophils <- FindNeighbors(Neutrophils, reduction = "harmony", dims = 1:3)
-Neutrophils <- FindClusters(Neutrophils, resolution = c(0.1)) #default res = 0.8
+Neutrophils <- FindClusters(Neutrophils, resolution = c(0.1)) 
 
 ##### UMAP Visualization showing 4 clusters (0, 1, 2, 3) 
 DimPlot(Neutrophils)
