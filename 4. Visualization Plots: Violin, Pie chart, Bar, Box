@@ -1,0 +1,303 @@
+library(Seurat)
+library(plyr)
+library(dplyr)
+library(cowplot)
+library(ggplot2)
+library(patchwork)
+library(Matrix)
+library(data.table)
+library(tidyr)
+library(ggpubr)
+library(tidyverse)
+library(RColorBrewer)
+library(writexl)
+library(viridis)
+library(hrbrthemes)
+library(dittoSeq)
+
+
+##### Neutrophil_Activation1 signature violin plot
+
+my_comparisons <- list( c("HC", "DNV"), c("HC", "JIA"), c("HC", "PCD"), c("HC", "KD"), c("HC", "MIS-C"), c("HC", "KD_IVIG"), c("HC", "MIS-C_R") )
+
+png("Comparison-Hyperactivation-across-Diseases.png", width=6, height=4, res=1200, units='in') 
+ggviolin(Neutrophils@meta.data, x = "disease", y = "Neutrophil_Activation1", fill = "disease",
+         palette = c("white", "gray", "blue", "black", "red", "orange", "yellow", "magenta"),
+         add = "boxplot", add.params = list(fill = "white"))+
+  stat_compare_means(comparisons = my_comparisons, label = "p.signif")+ # Add significance levels
+  stat_compare_means(label.y = 2)                                      # Add global the p-value 
+dev.off()
+
+#### Pie Charts for % Distribution of neutrophil subpopulations in different pdiatric diseases
+library(ggrepel)
+
+CD177positive <- subset(Neutrophils, subset = CD177 >1)
+DimPlot(CD177positive)
+
+Idents(Neutrophils) <- "RNA_snn_res.0.1"
+DimPlot(Neutrophils, split.by = "disease")
+
+Idents(Neutrophils) <- "disease"
+levels(Neutrophils)
+HC <- subset(Neutrophils, idents = "HC")
+KD <- subset(Neutrophils, idents = "KD")
+MISC <- subset(Neutrophils, idents = "MIS-C")
+DNV <- subset(Neutrophils, idents = "DNV")
+JIA <- subset(Neutrophils, idents = "JIA")
+PCD <- subset(Neutrophils, idents = "PCD")
+
+table(HC$RNA_snn_res.0.1)
+table(KD$RNA_snn_res.0.1)
+table(MISC$RNA_snn_res.0.1)
+table(DNV$RNA_snn_res.0.1)
+table(JIA$RNA_snn_res.0.1)
+table(PCD$RNA_snn_res.0.1)
+
+#create data frame
+#create pie chart
+data <- data.frame("subcluster" = c('0', '1', '2', '3'),
+                   "cells" = c(5, 778, 5, 5))
+a <- ggplot(data, aes(x = "" , y = cells, fill = subcluster)) +
+  geom_col(width = 1, color = 1) +
+  coord_polar(theta = "y") +
+  scale_fill_manual(values=c("red", "green", "skyblue", "magenta")) + ##"#E69F00", "blue"
+  geom_label_repel(data = data,
+                   aes(y = cells, label = paste0(cells, "")),
+                   size = 4.5, nudge_x = 1, show.legend = FALSE) +
+  guides(fill = guide_legend(title = "Cluster")) +
+  theme_void() + ggtitle("HC") +  ggeasy::easy_center_title()
+
+
+data <- data.frame("subcluster" = c('0', '1', '2', '3'),
+                   "cells" = c(4779, 1900, 282, 200))
+
+data <- data.frame("subcluster" = c('0', '1', '2', '3'),
+                   "cells" = c(1006, 258, 30, 50))
+
+b <-  ggplot(data, aes(x = "" , y = cells, fill = subcluster)) +
+  geom_col(width = 1, color = 1) +
+  coord_polar(theta = "y") +
+  scale_fill_manual(values=c("red", "green", "skyblue", "magenta")) + ##"#E69F00", "blue"
+  geom_label_repel(data = data,
+                   aes(y = cells, label = paste0(cells, "")),
+                   size = 4.5, nudge_x = 1, show.legend = FALSE) +
+  guides(fill = guide_legend(title = "Cluster")) +
+  theme_void() + ggtitle("KD") +  ggeasy::easy_center_title()
+
+data <- data.frame("subcluster" = c('0', '1', '2', '3'),
+                   "cells" = c(3642, 780, 238, 119))   
+c <- ggplot(data, aes(x = "" , y = cells, fill = subcluster)) +
+  geom_col(width = 1, color = 1) +
+  coord_polar(theta = "y") +
+  scale_fill_manual(values=c("red", "green", "skyblue", "magenta")) + ##"#E69F00", "blue"
+  geom_label_repel(data = data,
+                   aes(y = cells, label = paste0(cells, "")),
+                   size = 4.5, nudge_x = 1, show.legend = FALSE) +
+  guides(fill = guide_legend(title = "Cluster")) +
+  theme_void() + ggtitle("MIS-C") +  ggeasy::easy_center_title()
+
+data <- data.frame("subcluster" = c('0', '1', '2', '3'),
+                   "cells" = c(0, 9, 2, 2))
+d <- ggplot(data, aes(x = "" , y = cells, fill = subcluster)) +
+  geom_col(width = 1, color = 1) +
+  coord_polar(theta = "y") +
+  scale_fill_manual(values=c("red", "green", "skyblue", "magenta")) + ##"#E69F00", "blue"
+  geom_label_repel(data = data,
+                   aes(y = cells, label = paste0(cells, "")),
+                   size = 4.5, nudge_x = 1, show.legend = FALSE) +
+  guides(fill = guide_legend(title = "Cluster")) +
+  theme_void() + ggtitle("DNV") +  ggeasy::easy_center_title()
+
+data <- data.frame("subcluster" = c('0', '1', '2', '3'),
+                   "cells" = c(0, 7, 0, 0))
+e <- ggplot(data, aes(x = "" , y = cells, fill = subcluster)) +
+  geom_col(width = 1, color = 1) +
+  coord_polar(theta = "y") +
+  scale_fill_manual(values=c("red", "green", "skyblue", "magenta")) + ##"#E69F00", "blue"
+  geom_label_repel(data = data,
+                   aes(y = cells, label = paste0(cells, "")),
+                   size = 4.5, nudge_x = 1, show.legend = FALSE) +
+  guides(fill = guide_legend(title = "Cluster")) +
+  theme_void() + ggtitle("JIA") +  ggeasy::easy_center_title()
+
+data <- data.frame("subcluster" = c('0', '1', '2', '3'),
+                   "cells" = c(0, 8, 0, 0))
+f <- ggplot(data, aes(x = "" , y = cells, fill = subcluster)) +
+  geom_col(width = 1, color = 1) +
+  coord_polar(theta = "y") +
+  scale_fill_manual(values=c("red", "green", "skyblue", "magenta")) + ##"#E69F00", "blue"
+  geom_label_repel(data = data,
+                   aes(y = cells, label = paste0(cells, "")),
+                   size = 4.5, nudge_x = 1, show.legend = FALSE) +
+  guides(fill = guide_legend(title = "Cluster")) +
+  theme_void() + ggtitle("PCD") +  ggeasy::easy_center_title()
+
+
+a|b|c|d|e|f
+
+png("six-piecharts.png", width=15, height=8, res=1200, units='in') 
+
+########## Scatter plots for correlation of neutrophil effector pathways and N-M4 module
+head(HCKDMISC)
+png('ggscatter-NM4-Degranulation.png', width=3, height=3, res=1200, units='in') 
+ggscatter(HCKDMISC@meta.data, x = "NM4_1", y = "Neutrophil.Degranulation1",
+          add = "reg.line",                                 # Add regression line
+          conf.int = TRUE,                                  # Add confidence interval
+          add.params = list(color = "red", fill = "gray", size = 1.5)) +
+  stat_cor(method = "pearson", label.x = -0.5, label.y = 0.6)  # Add correlation coefficient
+dev.off()
+
+png('ggscatter-NM4-ROS_RNS_Production1.png', width=3, height=3, res=1200, units='in') 
+ggscatter(HCKDMISC@meta.data, x = "NM4_1", y = "ROS_RNS_Production1",
+          add = "reg.line",                                 # Add regression line
+          conf.int = TRUE,                                  # Add confidence interval
+          add.params = list(color = "red", fill = "gray", size = 1.5)) +
+  stat_cor(method = "pearson", label.x = -0.5, label.y = 1.0)  # Add correlation coefficient
+dev.off()
+
+png('ggscatter-NM4-Transendothelial.Migration1.png', width=3, height=3, res=1200, units='in') 
+ggscatter(HCKDMISC@meta.data, x = "NM4_1", y = "Transendothelial.Migration1",
+          add = "reg.line",                                 # Add regression line
+          conf.int = TRUE,                                  # Add confidence interval
+          add.params = list(color = "red", fill = "gray", size = 1.5)) +
+  stat_cor(method = "pearson", label.x = -0.5, label.y = 0.5)  # Add correlation coefficient
+dev.off()
+
+png('ggscatter-NM4-NET.Formation1.png', width=3, height=3, res=1200, units='in') 
+ggscatter(HCKDMISC@meta.data, x = "NM4_1", y = "NET.Formation1",
+          add = "reg.line",                                 # Add regression line
+          conf.int = TRUE,                                  # Add confidence interval
+          add.params = list(color = "red", fill = "gray", size = 1.5)) +
+  stat_cor(method = "pearson", label.x = -0.5, label.y = 0.6)  # Add correlation coefficient
+dev.off()
+
+######### Drugs targets (S100A12 and TSPO) scatter plots/correlation with neutrophil effector pathways
+png('ggscatter-TSPO-Hyperactivation.png', width=3, height=3, res=1200, units='in') 
+ggscatter(Neutrophils@meta.data, x = "TSPO.Expression1", y = "Neutrophil_Activation1",
+          add = "reg.line",                                 # Add regression line
+          conf.int = TRUE,                                  # Add confidence interval
+          add.params = list(color = "red", fill = "gray", size = 2)) +
+          stat_cor(method = "pearson", label.x = -0.5, label.y = 1.5)  # Add correlation coefficient
+dev.off()
+png('ggscatter-S100A12-Hyperactivation.png', width=3, height=3, res=1200, units='in') 
+ggscatter(Neutrophils@meta.data, x = "S100A12.Expression1", y = "Neutrophil_Activation1",
+          add = "reg.line",                                 # Add regression line
+          conf.int = TRUE,                                  # Add confidence interval
+          add.params = list(color = "red", fill = "gray", size = 2)) +
+         stat_cor(method = "pearson", label.x = -0.5, label.y = 1.5)  # Add correlation coefficient
+dev.off()
+
+png('ggscatter-TSPO-Degranulation.png', width=3, height=3, res=1200, units='in') 
+ggscatter(Neutrophils@meta.data, x = "TSPO.Expression1", y = "Neutrophil.Degranulation1",
+          add = "reg.line",                                 # Add regression line
+          conf.int = TRUE,                                  # Add confidence interval
+          add.params = list(color = "red", fill = "gray", size = 2)) +
+          stat_cor(method = "pearson", label.x = -0.5, label.y = 0.6)  # Add correlation coefficient
+dev.off()
+png('ggscatter-S100A12-Degranulation.png', width=3, height=3, res=1200, units='in') 
+ggscatter(Neutrophils@meta.data, x = "S100A12.Expression1", y = "Neutrophil.Degranulation1",
+          add = "reg.line",                                 # Add regression line
+          conf.int = TRUE,                                  # Add confidence interval
+          add.params = list(color = "red", fill = "gray", size = 2)) +
+          stat_cor(method = "pearson", label.x = -0.5, label.y = 0.6)  # Add correlation coefficient
+dev.off()
+
+png('ggscatter-TSPO-ROS.Production.png', width=3, height=3, res=1200, units='in') 
+ggscatter(Neutrophils@meta.data, x = "TSPO.Expression1", y = "ROS_RNS_Production1",
+          add = "reg.line",                                 # Add regression line
+          conf.int = TRUE,                                  # Add confidence interval
+          add.params = list(color = "red", fill = "gray", size = 1.5)) +
+  stat_cor(method = "pearson", label.x = -0.5, label.y = 1)  # Add correlation coefficient
+dev.off()
+png('ggscatter-S100A12-ROS.Production.png', width=3, height=3, res=1200, units='in') 
+ggscatter(Neutrophils@meta.data, x = "S100A12.Expression1", y = "ROS_RNS_Production1",
+          add = "reg.line",                                 # Add regression line
+          conf.int = TRUE,                                  # Add confidence interval
+          add.params = list(color = "red", fill = "gray", size = 1.5)) +
+  stat_cor(method = "pearson", label.x = -0.5, label.y = 1)  # Add correlation coefficient
+dev.off()
+
+png('ggscatter-S100A12-Transendothelial.Migration1.png', width=3, height=3, res=1200, units='in') 
+ggscatter(Neutrophils@meta.data, x = "S100A12.Expression1", y = "Transendothelial.Migration1",
+          add = "reg.line",                                 # Add regression line
+          conf.int = TRUE,                                  # Add confidence interval
+          add.params = list(color = "red", fill = "gray", size = 1.5)) +
+  stat_cor(method = "pearson", label.x = -0.5, label.y = 0.5)  # Add correlation coefficient
+dev.off()
+
+png('ggscatter-TSPO-Transendothelial.Migration1.png', width=3, height=3, res=1200, units='in') 
+ggscatter(Neutrophils@meta.data, x = "TSPO.Expression1", y = "Transendothelial.Migration1",
+          add = "reg.line",                                 # Add regression line
+          conf.int = TRUE,                                  # Add confidence interval
+          add.params = list(color = "red", fill = "gray", size = 1.5)) +
+  stat_cor(method = "pearson", label.x = -0.5, label.y = 0.5)  # Add correlation coefficient
+dev.off()
+
+png('ggscatter-S100A12-NET.Formation1.png', width=3, height=3, res=1200, units='in') 
+ggscatter(Neutrophils@meta.data, x = "S100A12.Expression1", y = "NET.Formation1",
+          add = "reg.line",                                 # Add regression line
+          conf.int = TRUE,                                  # Add confidence interval
+          add.params = list(color = "red", fill = "gray", size = 1.5)) +
+  stat_cor(method = "pearson", label.x = -0.5, label.y = 0.6)  # Add correlation coefficient
+dev.off()
+
+png('ggscatter-TSPO-NET.Formation1.png', width=3, height=3, res=1200, units='in') 
+ggscatter(Neutrophils@meta.data, x = "TSPO.Expression1", y = "NET.Formation1",
+          add = "reg.line",                                 # Add regression line
+          conf.int = TRUE,                                  # Add confidence interval
+          add.params = list(color = "red", fill = "gray", size = 1.5)) +
+  stat_cor(method = "pearson", label.x = -0.5, label.y = 0.6)  # Add correlation coefficient
+dev.off()
+
+########## Violin plot of Shared_CVD signature expression across KD and MIS-C stages
+# FOR MIS-C STAGES
+my_comparisons <- list( c("HC", "MIS-C_M"), c("MIS-C_M", "MIS-C_S"), c("MIS-C_S", "MIS-C_R") )
+png("ggviolin-Shared_CVD-MISC-Severity.png", width=5, height=4, res=1200, units='in') 
+ggviolin(MISC.stages@meta.data, x = "stage", y = "Shared_CVD1", fill = "stage",
+         palette = c("green", "red", "orange", "blue"), legend = "right",
+         add = "boxplot", add.params = list(fill = "white"))+
+  stat_compare_means(comparisons = my_comparisons, label = "p.signif")+ # Add significance levels
+  stat_compare_means(label.y = 4) + theme(legend.position = "right")  # Add global the p-value 
+dev.off()
+
+# FOR KD STAGES
+my_comparisons <- list( c("HC", "KD_A"), c("KD_A", "KD_IVIG"))
+png("ggviolin-Shared_CVD-KD-Severity.png", width=4, height=4, res=1200, units='in') 
+ggviolin(KD.stages@meta.data, x = "stage", y = "Shared_CVD1", fill = "stage",
+         palette = c("green", "red", "blue"), legend = "right",
+         add = "boxplot", add.params = list(fill = "white"))+
+  stat_compare_means(comparisons = my_comparisons, label = "p.signif")+ # Add significance levels
+  stat_compare_means(label.y = 3.5) + theme(legend.position = "right")   # Add global the p-value 
+dev.off()
+
+########## Transcription factor barplot of NES scores and Regulome sizes
+
+# TF BARPLOT
+
+df <- data.frame(TF=c("SPI1", "IRF4", "ETS1", "ELF1", "STAT3", "KLF1", "USF1",
+                        "SRF", "STAT5A", "NFKB1", "CEBPB", "GATA1", "TP53", "POU2F2"),
+                 Regulon=c(112, 82, 81, 95, 73, 42, 74, 23, 30, 40, 11, 29, 12, 17),
+                 NES=c(5.520, 5.253, 4.970, 4.838, 4.427, 4.226, 4.212, 4.181, 4.119, 
+                       3.990, 3.693, 3.430, 3.126, 3.056))
+
+df <- data.frame(TF=c("SPI1", "ELF1", "IRF4", "ETS1", "USF1", "STAT3", "KLF1", "NFKB1", 
+                      "STAT5A", "GATA1", "SRF", "POU2F2",  "TP53", "CEBPB"),
+                 Regulon=c(112, 95, 82, 81, 74, 73, 42, 40, 30, 29, 23, 17, 12, 11))
+
+df <- data.frame(TF=c("SPI1", "IRF4", "ETS1", "ELF1", "STAT3", "KLF1", "USF1",
+                      "SRF", "STAT5A", "NFKB1", "CEBPB", "GATA1", "TP53", "POU2F2"),
+                 NES_score=c(5.520, 5.253, 4.970, 4.838, 4.427, 4.226, 4.212, 4.181, 4.119, 
+                       3.990, 3.693, 3.430, 3.126, 3.056))
+                       
+### re-order barplot 
+df$TF <- factor(df$TF,levels = c("SPI1", "ELF1", "IRF4", "ETS1", "USF1", "STAT3", "KLF1", "NFKB1", "STAT5A", "GATA1", "SRF", "POU2F2",  "TP53", "CEBPB"))
+df$TF <- factor(df$TF,levels = c("SPI1", "IRF4", "ETS1", "ELF1", "STAT3", "KLF1", "USF1", "SRF", "STAT5A", "NFKB1", "CEBPB", "GATA1", "TP53", "POU2F2"))
+
+png('barplot-TF-Regulon.png', width=4, height=3, res=1200, units='in') 
+ggplot(df, aes(Regulon, TF, fill = Regulon)) + geom_bar(stat = "identity") + scale_fill_continuous(type = "viridis")
+dev.off()
+png('barplot-TF-NES.png', width=4, height=3, res=1200, units='in') 
+ggplot(df, aes(NES_score, TF, fill = NES_score)) + geom_bar(stat = "identity") + scale_fill_continuous(type = "viridis")
+dev.off()
+
+
