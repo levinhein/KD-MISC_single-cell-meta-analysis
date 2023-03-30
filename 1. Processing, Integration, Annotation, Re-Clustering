@@ -11,6 +11,11 @@ library(ggpubr)
 library(tidyverse)
 library(RColorBrewer)
 library(writexl)
+library(viridis)
+library(hrbrthemes)
+library(devtools)
+library(harmony)
+library(ggeasy)
 
 #################### PRE-PROCESSING #################### 
 
@@ -131,26 +136,6 @@ KD.harmony <- AddMetaData(KD.harmony, metadata = celltypes$CellStates, col.name 
 KD.harmony <- SetIdent(KD.harmony, value = "cellstates")
 
 ####################  NEUTROPHIL RE-CLUSTERING AND RE-HARMONIZATION ####################
-
-
-library(Seurat)
-library(dplyr)
-library(cowplot)
-library(ggplot2)
-library(patchwork)
-library(Matrix)
-library(data.table)
-library(tidyr)
-library(ggpubr)
-library(tidyverse)
-library(RColorBrewer)
-library(writexl)
-library(viridis)
-library(hrbrthemes)
-library(devtools)
-library(harmony)
-library(ggeasy)
-
 
 ##### Subset neutrophils
 Neutrophils <- subset(KD.harmony, idents = "Neutrophils")
