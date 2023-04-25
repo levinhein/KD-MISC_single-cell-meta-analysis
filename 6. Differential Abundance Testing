@@ -1,1 +1,194 @@
+##### This coode is adopted from: http://bioconductor.org/books/3.13/OSCA.multisample/differential-abundance.html#performing-the-da-analysis
 
+################################################################################
+################################################################################
+####################### DIFFERENTIAL ABUNDANCE TESTNG ##########################
+################################################################################
+################################################################################
+
+library(SingleCellExperiment)
+library(SummarizedExperiment)
+library(Seurat) 
+library(DESeq2)
+library(edgeR)
+
+############################################# A) DA Analysis for Cell types
+load(file = "Integrated.Data.Rdata")
+
+Idents(Integrated.Data) <- "disease"
+HCKD.celltypes <- subset(Integrated.Data, idents = c("HC", "KD"))
+HCMISC.celltypes <- subset(Integrated.Data, idents = c("HC", "MIS-C"))
+
+############################################# B) DA Analysis for Neutrophil subpopulations
+load(file = "Neutrophils.Rdata") 
+
+Idents(Neutrophils) <- "disease"
+HCKD.neutrophils <- subset(Neutrophils, idents = c("HC", "KD"))
+HCMISC.neutrophils <- subset(Neutrophils, idents = c("HC", "MIS-C"))
+
+##########################################################################################
+
+##### First convert the seurat object into singlecellexperiment object. Make sure to test each "data" individually after another.
+data <- as.SingleCellExperiment(HCKD.celltypes)
+data <- as.SingleCellExperiment(HCMISC.celltypes)
+data <- as.SingleCellExperiment(HCKD.neutrophils)
+data <- as.SingleCellExperiment(HCMISC.neutrophils)
+
+
+##### NOTE: Test each abundances below individually:
+
+    ### A) For cell types
+    abundances <- table(data$celltype, data$dataset) 
+    abundances <- table(data$celltype, data$dataset) 
+
+    ### B) For subpopulations
+    abundances <- table(data$seurat_clusters, data$dataset) 
+    abundances <- table(data$seurat_clusters, data$dataset) 
+    
+
+##########################################################################################
+### Continue:
+
+abundances <- unclass(abundances) 
+head(abundances)
+
+##### 6.2 Performing the DA analysis
+# Attaching some column metadata.
+extra.info <- colData(data)[match(colnames(abundances), data$dataset),]
+
+y.ab <- DGEList(abundances, samples=extra.info)
+y.ab
+
+
+design <- model.matrix(~ factor(disease), y.ab$samples)
+
+y.ab <- estimateDisp(y.ab, design, trend="none")
+summary(y.ab$common.dispersion)
+
+plotBCV(y.ab, cex=1)
+
+fit.ab <- glmQLFit(y.ab, design, robust=TRUE, abundance.trend=FALSE)
+
+summary(fit.ab$var.prior)
+summary(fit.ab$df.prior)
+
+plotQLDisp(fit.ab, cex=1)
+
+res <- glmQLFTest(fit.ab, coef=ncol(design))
+summary(decideTests(res))
+
+
+##### PRINT RESULTS
+topTags(res)
+
+######################### HC vs KD cell type abundances
+# Out of 8 celltypes, algorithm filterd  out low-abundance cell types: DC, Macrophages, Plasma.cells
+# Left/Kept for testing: B cells, T cells, Monocytes, Neutrophils, NK cells
+# RESULT
+#                 logFC   logCPM          F       PValue         FDR
+# Neutrophils   3.2337507 13.46435 14.0188834 0.0005791078 0.004632862
+# B.cells       0.7511759 17.25891  2.3154277 0.1360998584 0.389785527
+# NK           -0.6881161 16.16861  2.1979234 0.1461695728 0.389785527
+# Macrophages  -0.7899365 11.38207  0.9087741 0.3462650243 0.619903600
+# T.cells      -0.3752504 19.02070  0.7638324 0.3874397499 0.619903600
+# Monocytes     0.3514754 17.75462  0.4736312 0.4953626266 0.660483502
+# Plasma.cells  0.3105306 10.83846  0.2986056 0.5878461881 0.671824215
+# DC            0.2753775 11.11295  0.1471754 0.7033164376 0.703316438
+
+######################### HC vs MIS-C cell type abundances
+# Out of 8 celltypes, algorithm filterd  out low-abundance cell types: DC, Plasma.cells
+# Left/Kept for testing: B cells, T cells, Monocytes, Neutrophils, NK cells, Macrophages    
+# RESULT
+#                   logFC   logCPM            F      PValue         FDR
+# Neutrophils   3.70162659 14.17798 16.792864496 0.000182336 0.001458688
+# NK           -0.47184441 16.17592  1.553933111 0.219340799 0.860028609
+# B.cells       0.33224044 17.11078  1.001777626 0.322510728 0.860028609
+# Monocytes    -0.29915419 17.48986  0.442257566 0.509605572 0.958302709
+# Plasma.cells  0.25410591 10.82209  0.252844206 0.617659392 0.958302709
+# DC            0.18468548 11.08139  0.079259180 0.779661714 0.958302709
+# Macrophages   0.10831148 11.62667  0.019668493 0.889125371 0.958302709
+# T.cells      -0.01401603 19.13578  0.002765811 0.958302709 0.958302709
+#########################  HC vs KD seurat_clusters abundances
+# 
+#       logFC   logCPM         F       PValue         FDR
+# 0  4.6649868 17.31839 19.440465 0.0001087527 0.000435011
+# 1 -0.6407641 19.42231  1.685712 0.2034063982 0.405484522
+# 2  0.8253954 15.92981  0.792759 0.3798836468 0.405484522
+# 3  1.1856611 16.79292  0.710569 0.4054845221 0.405484522
+#########################  HC vs MIS-C seurat_clusters abundances
+# 
+#       logFC   logCPM          F       PValue         FDR
+# 0  4.3977683 17.09088 14.9519144 0.0003843652 0.001537461
+# 2  0.7874335 15.51830  0.9614167 0.3325527593 0.665105519
+# 1 -0.2135969 19.57356  0.3473958 0.5588092073 0.682318358
+# 3  0.4206928 15.79155  0.1699216 0.6823183583 0.682318358
+
+
+
+
+################################################################################
+################################################################################
+#################### VISUALIZATION: DIVERGENT BARPLOT ##########################
+################################################################################
+################################################################################
+
+library(tidyverse)
+
+data <- as.data.frame(topTags(res))
+head(data)
+
+### Add column metaata according to correct arrangement
+data$celltype <- c("Neutrophils","B.cells","NK.cells","Macrophages", "T.cells", "Monocytes", "Plasma.cells", "DC")
+data$celltype <- c("Neutrophils", "NK.cells","B.cells","Monocytes", "Plasma.cells", "DC", "Macrophages", "T.cells")
+data$cluster <- c("C0","C1","C2","C3")
+data$cluster <- c("C0","C2","C1","C3")
+head(data)
+tail(data)
+
+##### Divergent barplots visualization of abundances 
+
+png('HCKD-celltypes-logFC-abundances.png', width=5, height=3, res = 1200, units="in")
+ggplot(data,
+       aes(x = reorder(celltype, logFC), y = logFC,
+           fill = FDR < 0.05))+
+  geom_bar(stat = "identity")+
+  coord_flip()+
+  labs(x = "Cell types", y = "logFC per cell type",
+       title = "HC vs. KD cell type abundances")+
+  theme_minimal()
+dev.off()
+
+
+png('HCMISC-celltypes-logFC-abundances.png', width=5, height=3, res = 1200, units="in")
+ggplot(data,
+       aes(x = reorder(celltype, logFC), y = logFC,
+           fill = FDR < 0.05))+
+  geom_bar(stat = "identity")+
+  coord_flip()+
+  labs(x = "Cell types", y = "logFC per cell type",
+       title = "HC vs. MIS-C cell type abundances")+
+  theme_minimal()
+dev.off()
+
+
+png('HCKD-neutrophils-logFC-abundances.png', width=5, height=2, res = 1200, units="in")
+ggplot(data,
+       aes(x = reorder(cluster, logFC), y = logFC,
+           fill = FDR < 0.05))+
+  geom_bar(stat = "identity")+
+  coord_flip()+
+  labs(x = "Clusters", y = "logFC per cluster",
+       title = "HC vs. KD neutrophil cluster abundances")+
+  theme_minimal()
+dev.off()
+
+png('HCMISC-neutrophils-logFC-abundances.png', width=5, height=2, res = 1200, units="in")
+ggplot(data,
+       aes(x = reorder(cluster, logFC), y = logFC,
+           fill = FDR < 0.05))+
+  geom_bar(stat = "identity")+
+  coord_flip()+
+  labs(x = "Clusters", y = "logFC per cluster",
+       title = "HC vs. MIS-C neutrophil cluster abundances")+
+  theme_minimal()
+dev.off()
