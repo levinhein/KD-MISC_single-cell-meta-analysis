@@ -1,3 +1,5 @@
+########## NOTE: No novel code/scripts are generated from our analysis. 
+########## All codes used are adopted from the corresponding packages' public tutorials/vignettes used.
 ##### This coode is adopted from: http://bioconductor.org/books/3.13/OSCA.multisample/differential-abundance.html#performing-the-da-analysis
 
 ################################################################################
