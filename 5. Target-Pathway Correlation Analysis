@@ -1,3 +1,6 @@
+########## NOTE: No novel code/scripts are generated from our analysis. 
+########## All codes used are adopted from the corresponding packages' public tutorials/vignettes used.
+
 library(Seurat)
 library(plyr)
 library(dplyr)
