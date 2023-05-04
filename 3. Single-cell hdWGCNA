@@ -1,3 +1,6 @@
+########## NOTE: No novel code/scripts are generated from our analysis. 
+########## All codes used are adopted from the corresponding packages' public tutorials/vignettes used.
+
 library(Seurat)
 library(tidyverse)
 library(cowplot)
@@ -39,7 +42,6 @@ seurat_obj <- MetacellsByGroups(
   max_shared = 10,
   ident.group = 'cellstates') # set the Idents of the metacell seurat object
 
-
 # normalize metacell expression matrix:
 seurat_obj <- NormalizeMetacells(seurat_obj)
 
@@ -59,7 +61,6 @@ seurat_obj <- TestSoftPowers(
   seurat_obj,
   networkType = 'signed') # you can also use "unsigned" or "signed hybrid"
 
-
 # plot the results:
 plot_list <- PlotSoftPowers(seurat_obj)
 
@@ -73,12 +74,10 @@ png("power-threshold.png", width=6, height=6, res=1200, units='in')
 dev.off()
 
 # construct co-expression network:
-# construct co-expression network:
-# construct co-expression network:
 seurat_obj <- ConstructNetwork(
   seurat_obj, soft_power=8,
   setDatExpr=FALSE,
-  tom_name = 'TEST22' # name of the topoligical overlap matrix written to disk
+  tom_name = 'Run1' # name of the topoligical overlap matrix written to disk
   ) #   overwrite_tom = TRUE...maybe need new tom, try not overwriting?
 
 png("hdWGCNA-dendrogram-neutrophil.png", width=7, height=3, res=1200, units='in') 
@@ -88,10 +87,10 @@ dev.off()
 # need to run ScaleData first or else harmony throws an error:
 seurat_obj <- ScaleData(seurat_obj, features=VariableFeatures(seurat_obj))
 
-# compute all MEs in the full single-cell dataset # PARANG RUN HARMONY ???
+# compute all MEs in the full single-cell dataset 
 seurat_obj <- ModuleEigengenes(
   seurat_obj,
-  group.by.vars="orig.ident" # coming from same sample of origin ---orig.ident? 
+  group.by.vars="orig.ident" 
 )
 
 # harmonized module eigengenes:
@@ -100,13 +99,10 @@ hMEs <- GetMEs(seurat_obj)
 # module eigengenes:
 MEs <- GetMEs(seurat_obj, harmonized=FALSE)
 
-
 # compute eigengene-based connectivity (kME):
 seurat_obj <- ModuleConnectivity(
   seurat_obj,
-  group.by = 'cellstates', group_name = "Neutrophils") # cellstate & neutrophil, RNA and "0"?
-
-
+  group.by = 'cellstates', group_name = "Neutrophils") 
 
 # rename the modules
 seurat_obj <- ResetModuleNames(
@@ -134,8 +130,8 @@ delete <- head(modules, 50)
 
 write.table(delete, file = "modules-top50.txt", sep = ",", quote = FALSE, row.names = F)
 
-save(seurat_obj, file='hdWGCNA_object.Rdata') # October 16 3:30AM
-saveRDS(seurat_obj, file='hdWGCNA_object.rds') # October 16 3:30AM
+save(seurat_obj, file='hdWGCNA_object.Rdata') 
+saveRDS(seurat_obj, file='hdWGCNA_object.rds')
 load(file='hdWGCNA_object.Rdata')
 
 
@@ -147,17 +143,6 @@ seurat_obj <- ModuleExprScore(
   method='Seurat'
 )
 
-
-# compute gene scoring for the top 25 hub genes by kME for each module
-# with UCell method
-#BiocManager::install("UCell")
-# library(UCell)
-# 
-# seurat_obj <- ModuleExprScore(
-#   seurat_obj,
-#   n_genes = 25,
-#   method='UCell'
-# )
 
 ############# BASIC VISUALIZATION
 # make a featureplot of hMEs for each module
@@ -245,14 +230,15 @@ png("NM1-VlnPlot.png", width=5, height=5, res=1200, units='in')
 png("NM2-VlnPlot.png", width=5, height=5, res=1200, units='in') 
 png("NM3-VlnPlot.png", width=5, height=5, res=1200, units='in') 
 png("NM4-VlnPlot.png", width=5, height=5, res=1200, units='in') 
+
 # Plot INH-M4 hME using Seurat VlnPlot function
-p <- VlnPlot(seurat_obj, features = 'N-M4', group.by = 'RNA_snn_res.0.1', pt.size = 0) # don't show actual data points
+p <- VlnPlot(seurat_obj, features = 'N-M4', group.by = 'RNA_snn_res.0.1', pt.size = 0) 
 p
 
-p  <- VlnPlot(seurat_obj, features = 'N-M4', group.by = 'Condition', pt.size = 0) # don't show actual data points
+p  <- VlnPlot(seurat_obj, features = 'N-M4', group.by = 'Condition', pt.size = 0) 
 p
 
-p <- VlnPlot(seurat_obj, features = 'N-M1', group.by = 'disease', pt.size = 0) # don't show actual data points
+p <- VlnPlot(seurat_obj, features = 'N-M1', group.by = 'disease', pt.size = 0) 
 p
 
 dev.off()
@@ -297,8 +283,6 @@ hub_df <- GetHubGenes(seurat_obj, n_hubs = 25, mods=c("N-M3"))
 M3 <- hub_df$gene_name
 hub_df <- GetHubGenes(seurat_obj, n_hubs = 25, mods=c("N-M4"))
 M4 <- hub_df$gene_name
-
-
 
 HCKDMISC
 head(HCKDMISC)
@@ -372,122 +356,4 @@ ModuleUMAPPlot(
 
 g <- ModuleUMAPPlot(seurat_obj,  return_graph=TRUE)
 rm(p, p2)
-
-
-
-########################3 MODULE - TRAIT CORRELATION
-########################3 MODULE - TRAIT CORRELATION
-########################3 MODULE - TRAIT CORRELATION
-
-head(seurat_obj)
-
-seurat_obj$diseases <- seurat_obj$disease
-seurat_obj$disease <- NULL
-
-
-# convert sex to factor
-seurat_obj$diseases <- as.factor(seurat_obj$diseases)
-seurat_obj$stage <- as.factor(seurat_obj$stage)
-
-# list of traits to correlate
-colnames(seurat_obj@meta.data)
-cur_traits <- colnames(seurat_obj@meta.data)
-cur_traits <- c("orig.ident", 'diseases', 'stage', "nCount_RNA", "nFeature_RNA", "Phase", "S.Score",  "G2M.Score", "percent.mt",
-                "CD177.Expression1", "SPI1.Expression1", "SNEP.Expression1", "Neutrophil_Activation1", "Neutrophil.Degranulation1",
-                "NET.Formation1", "Transendothelial.Migration1", "ROS_RNS_Production1", "Shared_CVD1")
-
-cur_traits <- c("nCount_RNA", "nFeature_RNA", "Phase", "S.Score",  "G2M.Score", "percent.mt",
-                "CD177.Expression1", "SPI1.Expression1", "SNEP.Expression1", "Neutrophil_Activation1", "Neutrophil.Degranulation1",
-                "NET.Formation1", "Transendothelial.Migration1", "ROS_RNS_Production1", "Shared_CVD1")
-cur_traits
-
-      Idents(seurat_obj) <- "diseases"
-      seurat_objKD <- subset(x = seurat_obj, idents = c("KD", "HC"))
-      seurat_objMISC <- subset(x = seurat_obj, idents = c("MIS-C", "HC"))
-
-head(seurat_obj)
-seurat_obj$msex <- as.factor(seurat_obj$msex)
-
-seurat_obj$orig.ident <- as.factor(seurat_obj$orig.ident) 
-seurat_obj$dataset  <- as.factor(seurat_obj$dataset)
-seurat_obj$DF.classifications_0.25_0.09_191  <- as.numeric(seurat_obj$DF.classifications_0.25_0.09_191)
-seurat_obj$Phase <-  as.factor(seurat_obj$Phase)
-seurat_obj$old.ident <-  as.factor(seurat_obj$old.ident)
-seurat_obj$celltype_disease <-  as.factor(seurat_obj$celltype_disease)
-seurat_obj$celltype_stage <-  as.factor(seurat_obj$celltype_stage)
-seurat_obj$Condition  <- as.factor(seurat_obj$Condition)
-seurat_obj$metacell_diseaseing <-  as.factor(seurat_obj$metacell_diseaseing)
-
-seurat_obj <- ModuleTraitCorrelation(
-  seurat_obj,
-  traits = cur_traits,
-  group.by='RNA_snn_res.0.1')
-
-seurat_obj <- ModuleTraitCorrelation(
-  seurat_obj,
-  traits = cur_traits,
-  group.by='Condition')
-
-head(seurat_obj)
-
-# get the mt-correlation results
-mt_cor <- GetModuleTraitCorrelation(seurat_obj)
-
-names(mt_cor)
-names(mt_cor$cor)
-
-
-head(mt_cor$cor$all_cells[,1:5])
-
-#Plot Correlation Heatmap
-
-A <- PlotModuleTraitCorrelation(
-  seurat_obj,
-  label = 'fdr',
-  label_symbol = 'stars',
-  text_size = 2,
-  text_digits = 2,
-  text_color = 'white',
-  high_color = 'yellow',
-  mid_color = 'black',
-  low_color = 'purple',
-  plot_max = 0.2,
-  combine=FALSE
-)
-
-png('FCGR2A-split.png', width=8, height=3, res=1200, units='in') 
-A$all_cells
-A$`0`
-A$`1`
-A$`2`
-A$`3`
-A$`4`
-A$`5`
-
-A$`KD&MIS-C`
-
-
-dev.off()
-
-png('hdWGCNA-Module-Trait-Correlation-ALL.png', width=6, height=15, res=1200, units='in') 
-PlotModuleTraitCorrelation(
-  seurat_obj,
-  label = 'fdr',
-  label_symbol = 'stars',
-  text_size = 2,
-  text_digits = 2,
-  text_color = 'white',
-  high_color = 'yellow',
-  mid_color = 'black',
-  low_color = 'purple',
-  plot_max = 0.2,
-  combine=TRUE
-)
-dev.off()
-
-
-
-
-
-
 
