@@ -11,7 +11,7 @@ library(ggpubr)
 library(EnhancedVolcano) 
 library(VennDiagram)
 
-### Disease (cluster 0) vs Healthy (cluster 1)
+### Disease (cluster 0) vs Healthy (cluster 1) and Volcano Plot visualization
 
 # KD_0 vs HC_1
 KD <- subset(Neutrophils, idents = c("KD_C0", "HC_C1"))
@@ -56,6 +56,7 @@ MISC_UP <- MISC_MARKERS %>% dplyr::filter(cluster == "MIS-C_C0") %>% dplyr::filt
 
 xx.1 <- list(K = sample(KD_UP), M = sample(MISC_UP))
 overlap <- calculate.overlap(xx.1)
-overlap$a3
+SNEP <- overlap$a3
 
- 
+ #### DotPlot visualization of SNEP across diseases
+DotPlot(object = ALL.harmony, features = SNEP, split.by = 'disease')
