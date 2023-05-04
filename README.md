@@ -14,18 +14,17 @@ Analysis and plotting scripts for differential expression analysis and SNEP iden
 # 3. Single-cell hdWGCNA
 Analysis and plotting scripts for single-cell high-dimensional weighted gene co-expression network analysis
 
-# 4. Visualization Plots
-Analysis and plotting scripts for other statistical testing and visualizations including violin, pie chart, bar, box, scatter plots 
-
-# 5. Target-Pathway Correlation Analysis
+# 4. Target-Pathway Correlation Analysis
 Analysis and plotting scripts for correlation analyses
 
-# 6. Differential Abundance Testing
+# 5. Differential Abundance Testing
 Analysis and plotting scripts for testing the differential abundance of cell types and neutrophil subpopulations
 
-# 7. Validation - MIS-C bulk RNA-seq
+# 6. Validation - MIS-C bulk RNA-seq
 Analysis and plotting scripts for the validation study (bulk RNA-seq) for independent MIS-C data
 
-# 8. Validation - KD scRNA-seq
+# 7. Validation - KD scRNA-seq
 Analysis and plotting scripts for the validation study (single-cell RNA-seq) for independent KD data
 
+# 8. Visualization Plots
+Analysis and plotting scripts for other statistical testing and visualizations including violin, pie chart, bar, box, scatter plots 
