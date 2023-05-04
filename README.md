@@ -6,31 +6,26 @@ NOTE: No novel code/scripts are generated from our analysis. All codes used are 
 # Folder Structure
 
 # 1. Processing, Integration, Annotation, Re-Clustering
-Analysis and plotting scripts to reproduce Figure 1B, C, D and Figure 2A, B, C, E, G
+Analysis and plotting scripts used for pre-processing all scRNA-seq data until re-clustering
 
 # 2. Differential Expression & SNEP Identification
-Analysis and plotting scripts to reproduce Figure 3A, B
-
+Analysis and plotting scripts for differential expression analysis and SNEP identification
 
 # 3. Single-cell hdWGCNA
-Analysis and plotting scripts to reproduce Figure 5A, B, C, E
+Analysis and plotting scripts for single-cell high-dimensional weighted gene co-expression network analysis
 
+# 4. Visualization Plots: Violin, Pie chart, Bar, Box, Scatter plots
+Analysis and plotting scripts for other visualizations and statistical testing  
 
-# 4. Plots: Violin, Pie chart, Bar, Box, Scatter plots
-Analysis and plotting scripts to reproduce Figure 1 E, F, G, H
-Analysis and plotting scripts to reproduce Figure 2 D, F, H, I, J, K, L
-Analysis and plotting scripts to reproduce Figure 3 F, N, O, P, Q
-Analysis and plotting scripts to reproduce Figure 4 B, C
-Analysis and plotting scripts to reproduce Figure 5 D
-Analysis and plotting scripts to reproduce Figure 6 F, G, H, I
-Analysis and plotting scripts to reproduce Figure 7 B, D
+# 5. Target-Pathway Correlation Analysis
+Analysis and plotting scripts for correlation analyses
 
-# 5. Correlation Analyses
-Analysis and plotting scripts to reproduce Figure 4 D, E, F
-Analysis and plotting scripts to reproduce Figure 5 G, H, I, J
-Analysis and plotting scripts to reproduce Figure 7 F
+# 6. Differential Abundance Testing
+Analysis and plotting scripts for testing the differential abundance of cell types and neutrophil subpopulations
 
+# 7. Validation - MIS-C bulk RNA-seq
+Analysis and plotting scripts for the validation study (bulk RNA-seq) for independent MIS-C data
 
-
-
+# 8. Validation - KD scRNA-seq
+Analysis and plotting scripts for the validation study (single-cell RNA-seq) for independent KD data
 
