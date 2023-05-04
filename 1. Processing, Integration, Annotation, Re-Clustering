@@ -1,3 +1,5 @@
+##### No novel code/scripts are generated from our analysis. The codes used are adopted from the corresponding packages used.
+
 library(Seurat)
 library(plyr)
 library(dplyr)
@@ -19,8 +21,8 @@ library(ggeasy)
 
 #################### PRE-PROCESSING #################### 
 
-##### Load data
-Data1.data <- Read10X(data.dir = "/mnt/RAID_5/vincent/Project-Kawasaki_Disease/2021_DatafromGEO_GSE_GSE168732-KD-before-IVIG/P1/P1-BEFORE-IVIG")
+##### Load each data. Here's an example of 1 scRNA-seq data.
+Data1.data <- Read10X(data.dir = "/mnt/RAID_5/vincent/Project/2021_DatafromGEO_GSE_GSE168732-KD-before-IVIG/P1/P1-BEFORE-IVIG")
 
 ##### Create Seurat object
 Data1 <- CreateSeuratObject(counts = Data1.data, project = "Data1", min.cells = 3, min.features = 200)
@@ -44,10 +46,13 @@ Data1 <- Data1[grep("^RP[SL][[:digit:]]|^RPLP[[:digit:]]|^RPSA", rownames(Data1)
 suppressMessages(require(DoubletFinder))
 
 Data1 <- NormalizeData(Data1)
-Data1 <- FindVariableFeatures(Data1, selection.method = "vst", nfeatures = 3000) # this should be all genes!!!
+Data1 <- FindVariableFeatures(Data1, selection.method = "vst", nfeatures = 3000) 
 Data1 <- ScaleData(Data1)
 Data1 <- RunPCA(Data1)
 Data1 <- RunUMAP(Data1, dims = 1:10)
+
+##### Do this for all data individually to run the code below
+A <- Data1
 
 ## Can run parameter optimization with paramSweep
 sweep.res <- paramSweep_v3(A)
@@ -71,10 +76,13 @@ any(A@meta.data=="Doublet")
 head(A)
 
 ## Confirm that there's no doublet in each data
-any(KD_A7@meta.data=="Doublet")
+any(A@meta.data=="Doublet")
+
+##### Re-assign to original name. Do it for all data.
+Data1 <- A
 
 ## Keep all data in a list
-All_Data.list <- list(Data1, DataN) # All datasets 1-N included 
+All_Data.list <- list(Data1, , Data2, DataN) # All datasets 1-N included 
 
 
 ###########  CELL CYCLE SCORING
@@ -82,44 +90,44 @@ s.genes <- cc.genes$s.genes
 g2m.genes <- cc.genes$g2m.genes
 
 # ### Normalization, Scaling, Cellcycle Scoring: https://satijalab.org/seurat/articles/cell_cycle_vignette.html
-for (i in 1:length (KD.list)) {
-  KD.list[[i]] <-NormalizeData(KD.list[[i]], verbose = TRUE)
-  KD.list[[i]] <-FindVariableFeatures(KD.list[[i]], selection.method = "vst", nfeatures=3000, verbose = TRUE)
-  KD.list[[i]] <-ScaleData(KD.list[[i]], features = rownames(KD.list[[i]]), verbose = TRUE)
-  KD.list[[i]] <-RunPCA(KD.list[[i]], verbose = TRUE)
-  KD.list[[i]] <-CellCycleScoring(KD.list[[i]], s.features = s.genes, g2m.features = g2m.genes, set.ident = TRUE)
+for (i in 1:length (All_Data.list)) {
+  All_Data.list[[i]] <-NormalizeData(All_Data.list[[i]], verbose = TRUE)
+  All_Data.list[[i]] <-FindVariableFeatures(All_Data.list[[i]], selection.method = "vst", nfeatures=3000, verbose = TRUE)
+  All_Data.list[[i]] <-ScaleData(All_Data.list[[i]], features = rownames(All_Data.list[[i]]), verbose = TRUE)
+  All_Data.list[[i]] <-RunPCA(All_Data.list[[i]], verbose = TRUE)
+  All_Data.list[[i]] <-CellCycleScoring(All_Data.list[[i]], s.features = s.genes, g2m.features = g2m.genes, set.ident = TRUE)
 }
 
 ##### MERGE ALL THE INDIVIDUAL DATASETS
-KD.merged <- merge(KD.list[[1]], KD.list[-1], project = "KD Project") 
+ALL.merged <- merge(All_Data.list[[1]], All_Data.list[-1], project = "Neutrophil Project") 
 
 # Need to run the  Scaldedata and RunPCA again because after you merge it will be erased (merging erases the ...) See merge() 
-KD.merged <-NormalizeData(KD.merged, verbose = TRUE)
-KD.merged <-FindVariableFeatures(KD.merged, selection.method = "vst", nfeatures=3000, verbose = TRUE) # nFeatures = all.genes ...or features = VariableFeatures(object = pbmc)
+ALL.merged <-NormalizeData(ALL.merged, verbose = TRUE)
+ALL.merged <-FindVariableFeatures(ALL.merged, selection.method = "vst", nfeatures=3000, verbose = TRUE) # test nFeatures = all.genes ...or features = VariableFeatures(object)
      
 ##### Sacale data and RunPCA 
-KD.merged <-ScaleData(KD.merged, features = rownames(KD.merged), verbose = TRUE) # scale all genes!!!!! ... vars.to.regress = c("dataset", "disease", "stage")
-KD.merged <-RunPCA(KD.merged, verbose = TRUE) ### This will use the nFeatures=3000 from before ... or you can set: features = VariableFeatures(object = pbmc)
+ALL.merged <-ScaleData(ALL.merged, features = rownames(ALL.merged), verbose = TRUE) 
+ALL.merged <-RunPCA(ALL.merged, verbose = TRUE) ### This will use the nFeatures=3000 from before ... or you can set: features = VariableFeatures(object)
       
 ##### DIMENSIONALITY
-KD.filtered <- RunUMAP(KD.merged, dims = 1:30, reduction = 'pca') 
-    DimPlot(KD.filtered, reduction = 'umap', group.by = 'disease')
-    DimPlot(KD.filtered, reduction = 'umap', split.by = 'disease')
+ALL.filtered <- RunUMAP(ALL.merged, dims = 1:30, reduction = 'pca') 
+    DimPlot(ALL.filtered, reduction = 'umap', group.by = 'disease')
+    DimPlot(ALL.filtered, reduction = 'umap', split.by = 'disease')
 
 
 ####################  HARMONY: INTEGRATION ####################
 library("harmony")
 
 ##### Integration and harmonization
-KD.harmony <- KD.filtered %>%
+ALL.harmony <- ALL.filtered %>%
   RunHarmony(group.by.vars = 'orig.ident', plot_convergence = FALSE, kmeans_init_nstart=20, kmeans_init_iter_max=100)
 
-KD.harmony@reductions
-KD.harmony.embed <- Embeddings(KD.harmony, "harmony")
-KD.harmony.embed[1:10,1:10] # checking the first 10 harmony components
+ALL.harmony@reductions
+ALL.harmony.embed <- Embeddings(ALL.harmony, "harmony")
+ALL.harmony.embed[1:10,1:10] # checking the first 10 harmony components
 
 ##### Do UMAP and clustering using ** Harmony embeddings instead of PCA **
-KD.harmony <- KD.harmony %>%
+ALL.harmony <- ALL.harmony %>%
   RunUMAP(reduction = 'harmony', dims = 1:30) %>%
   FindNeighbors(reduction = "harmony", dims = 1:30) %>%
   FindClusters(resolution = 0.5)
@@ -128,17 +136,17 @@ KD.harmony <- KD.harmony %>%
 library(SignacX)
 
 ##### Run Signac FAST 
-labels_fast <- SignacFast(KD.harmony)
-celltypes = GenerateLabels(labels_fast, E = KD.harmony)
+labels_fast <- SignacFast(ALL.harmony)
+celltypes = GenerateLabels(labels_fast, E = ALL.harmony)
 
 ##### All Cellstates
-KD.harmony <- AddMetaData(KD.harmony, metadata = celltypes$CellStates, col.name = "cellstates")
-KD.harmony <- SetIdent(KD.harmony, value = "cellstates")
+ALL.harmony <- AddMetaData(ALL.harmony, metadata = celltypes$CellStates, col.name = "cellstates")
+ALL.harmony <- SetIdent(ALL.harmony, value = "cellstates")
 
 ####################  NEUTROPHIL RE-CLUSTERING AND RE-HARMONIZATION ####################
 
 ##### Subset neutrophils
-Neutrophils <- subset(KD.harmony, idents = "Neutrophils")
+Neutrophils <- subset(ALL.harmony, idents = "Neutrophils")
 
 ##### Find Variable Features again
 Neutrophils <- FindVariableFeatures(Neutrophils, selection.method = "vst", nfeatures = 2000)
