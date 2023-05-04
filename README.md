@@ -1,6 +1,8 @@
 # KD-MISC_single-cell-meta-analysis
 Analysis scripts for the manuscript "Single-cell Meta-analysis Of Neutrophil Activation in Kawasaki Disease and Multi-system Inflammatory Syndrome in Children"
 
+NOTE: No novel code/scripts are generated from our analysis. All codes used are adopted from the corresponding packages used.
+
 # Folder Structure
 
 # 1. Processing, Integration, Annotation, Re-Clustering
