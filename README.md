@@ -14,8 +14,8 @@ Analysis and plotting scripts for differential expression analysis and SNEP iden
 # 3. Single-cell hdWGCNA
 Analysis and plotting scripts for single-cell high-dimensional weighted gene co-expression network analysis
 
-# 4. Visualization Plots: Violin, Pie chart, Bar, Box, Scatter plots
-Analysis and plotting scripts for other visualizations and statistical testing  
+# 4. Visualization Plots
+Analysis and plotting scripts for other statistical testing and visualizations including violin, pie chart, bar, box, scatter plots 
 
 # 5. Target-Pathway Correlation Analysis
 Analysis and plotting scripts for correlation analyses
