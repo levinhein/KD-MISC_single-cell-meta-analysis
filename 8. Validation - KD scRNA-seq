@@ -2,3 +2,286 @@
 ########## All codes used are adopted from the corresponding packages' public tutorials/vignettes used.
 
 
+####################################################################################################################
+####################################################################################################################
+####################################################################################################################
+#####
+##### scRNA-seq VALIDATION:  2023
+#####
+####################################################################################################################
+####################################################################################################################
+####################################################################################################################
+
+library(Seurat)
+library(plyr)
+library(dplyr)
+library(cowplot)
+library(ggplot2)
+library(patchwork)
+library(Matrix)
+library(data.table)
+library(tidyr)
+library(ggpubr)
+library(tidyverse)
+library(RColorBrewer)
+library(writexl)
+
+################################################################################ KAWASAKI DISEASE
+################################################################################ KAWASAKI DISEASE
+################################################################################ KAWASAKI DISEASE
+################################################################################ KAWASAKI DISEASE
+################################################################################ KAWASAKI DISEASE
+
+KD1.data <- Read10X(data.dir = "/mnt/RAID_5/vincent/Project-Kawasaki_Disease/2023-Validation-KD-GSE200743/KD1053/")
+#Create Seurat object
+KD1 <- CreateSeuratObject(counts = KD1.data, project = "KD1", min.cells = 3, min.features = 100)
+#Standard pre-processing workflow
+KD1[["percent.mt"]] <- PercentageFeatureSet(KD1, pattern = "^MT-")
+VlnPlot(KD1, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"  ), ncol = 3)
+KD1 <- subset(KD1, subset = nFeature_RNA > 100 & nFeature_RNA < 5000 & percent.mt < 15)
+#Removal of Ribosomal Genes
+KD1 <- KD1[!grepl("^MT-", rownames(KD1)), ] #MT genes are already removed but the column of its percent.mt values remain
+KD1 <- KD1[!grepl("MALAT1", rownames(KD1)), ]
+KD1 <- KD1[!grepl("XIST", rownames(KD1)), ]
+KD1 <- KD1[!grepl("RSP4Y1", rownames(KD1)), ]
+KD1 <- KD1[grep("^RP[SL][[:digit:]]|^RPLP[[:digit:]]|^RPSA", rownames(KD1), value = T, invert = T), ]
+rm(KD1.data)
+
+
+KD2.data <- Read10X(data.dir = "/mnt/RAID_5/vincent/Project-Kawasaki_Disease/2023-Validation-KD-GSE200743/KD1092/")
+head(KD2.data)
+#Create Seurat object
+KD2 <- CreateSeuratObject(counts = KD2.data, project = "KD2", min.cells = 3, min.features = 100)
+#Standard pre-processing workflow
+KD2[["percent.mt"]] <- PercentageFeatureSet(KD2, pattern = "^MT-")
+VlnPlot(KD2, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"  ), ncol = 3)
+KD2 <- subset(KD2, subset = nFeature_RNA > 100 & nFeature_RNA < 5000 & percent.mt < 15)
+#Removal of Ribosomal Genes
+KD2 <- KD2[!grepl("^MT-", rownames(KD2)), ] #MT genes are already removed but the column of its percent.mt values remain
+KD2 <- KD2[!grepl("MALAT1", rownames(KD2)), ]
+KD2 <- KD2[!grepl("XIST", rownames(KD2)), ]
+KD2 <- KD2[!grepl("RSP4Y1", rownames(KD2)), ]
+KD2 <- KD2[grep("^RP[SL][[:digit:]]|^RPLP[[:digit:]]|^RPSA", rownames(KD2), value = T, invert = T), ]
+rm(KD2.data)
+
+
+KD3.data <- Read10X(data.dir = "/mnt/RAID_5/vincent/Project-Kawasaki_Disease/2023-Validation-KD-GSE200743/KD1340/")
+head(KD3.data)
+#Create Seurat object
+KD3 <- CreateSeuratObject(counts = KD3.data, project = "KD3", min.cells = 3, min.features = 100)
+#Standard pre-processing workflow
+KD3[["percent.mt"]] <- PercentageFeatureSet(KD3, pattern = "^MT-")
+VlnPlot(KD3, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"  ), ncol = 3)
+KD3 <- subset(KD3, subset = nFeature_RNA > 100 & nFeature_RNA < 5000 & percent.mt < 15)
+#Removal of Ribosomal Genes
+KD3 <- KD3[!grepl("^MT-", rownames(KD3)), ] #MT genes are already removed but the column of its percent.mt values remain
+KD3 <- KD3[!grepl("MALAT1", rownames(KD3)), ]
+KD3 <- KD3[!grepl("XIST", rownames(KD3)), ]
+KD3 <- KD3[!grepl("RSP4Y1", rownames(KD3)), ]
+KD3 <- KD3[grep("^RP[SL][[:digit:]]|^RPLP[[:digit:]]|^RPSA", rownames(KD3), value = T, invert = T), ]
+rm(KD3.data)
+
+
+######  DATASET 4---------------------------- YOUNG CHILD HEALTHY CONTROLS (HC1) DATASETS GSE166489  --------------------------------------#####
+######  DATASET 4---------------------------- YOUNG CHILD HEALTHY CONTROLS (HC1) DATASETS GSE166489  --------------------------------------#####
+######  DATASET 4---------------------------- YOUNG CHILD HEALTHY CONTROLS (HC1) DATASETS GSE166489  --------------------------------------#####
+######  DATASET 4---------------------------- YOUNG CHILD HEALTHY CONTROLS (HC1) DATASETS GSE166489  --------------------------------------#####
+######  DATASET 4---------------------------- YOUNG CHILD HEALTHY CONTROLS (HC1) DATASETS GSE166489  --------------------------------------#####
+
+HC4.data <- Read10X(data.dir = "/mnt/RAID_5/vincent/Project-Kawasaki_Disease/2021_DatafromGEO_GSE_GSE166489-MISC-HC/HC1/")
+#Create Seurat object
+HC4 <- CreateSeuratObject(counts = HC4.data, project = "HC4", min.cells = 3, min.features = 100)
+#Standard pre-processing workflow
+HC4[["percent.mt"]] <- PercentageFeatureSet(HC4, pattern = "^MT-")
+HC4 <- subset(HC4, subset = nFeature_RNA > 100 & nFeature_RNA < 5000 & percent.mt < 15)
+#Removal of Ribosomal Genes
+HC4 <- HC4[!grepl("^MT-", rownames(HC4)), ] #MT genes are already removed but the column of its percent.mt values remain
+HC4 <- HC4[!grepl("MALAT1", rownames(HC4)), ]
+HC4 <- HC4[!grepl("XIST", rownames(HC4)), ]
+HC4 <- HC4[!grepl("RSP4Y1", rownames(HC4)), ]
+HC4 <- HC4[grep("^RP[SL][[:digit:]]|^RPLP[[:digit:]]|^RPSA", rownames(HC4), value = T, invert = T), ]
+rm(HC4.data)
+
+
+HC5.data <- Read10X(data.dir = "/mnt/RAID_5/vincent/Project-Kawasaki_Disease/2021_DatafromGEO_GSE_GSE166489-MISC-HC/HC2/")
+#Create Seurat object
+HC5 <- CreateSeuratObject(counts = HC5.data, project = "HC5", min.cells = 3, min.features = 100)
+#Standard pre-processing workflow
+HC5[["percent.mt"]] <- PercentageFeatureSet(HC5, pattern = "^MT-")
+HC5 <- subset(HC5, subset = nFeature_RNA > 100 & nFeature_RNA < 5000 & percent.mt < 15)
+#Removal of Ribosomal Genes
+HC5 <- HC5[!grepl("^MT-", rownames(HC5)), ] #MT genes are already removed but the column of its percent.mt values remain
+HC5 <- HC5[!grepl("MALAT1", rownames(HC5)), ]
+HC5 <- HC5[!grepl("XIST", rownames(HC5)), ]
+HC5 <- HC5[!grepl("RSP4Y1", rownames(HC5)), ]
+HC5 <- HC5[grep("^RP[SL][[:digit:]]|^RPLP[[:digit:]]|^RPSA", rownames(HC5), value = T, invert = T), ]
+rm(HC5.data)
+
+HC6.data <- Read10X(data.dir = "/mnt/RAID_5/vincent/Project-Kawasaki_Disease/2021_DatafromGEO_GSE_GSE166489-MISC-HC/HC3/")
+#Create Seurat object
+HC6 <- CreateSeuratObject(counts = HC6.data, project = "HC6", min.cells = 3, min.features = 100)
+#Standard pre-processing workflow
+HC6[["percent.mt"]] <- PercentageFeatureSet(HC6, pattern = "^MT-")
+HC6 <- subset(HC6, subset = nFeature_RNA > 100 & nFeature_RNA < 5000 & percent.mt < 15)
+#Removal of Ribosomal Genes
+HC6 <- HC6[!grepl("^MT-", rownames(HC6)), ] #MT genes are already removed but the column of its percent.mt values remain
+HC6 <- HC6[!grepl("MALAT1", rownames(HC6)), ]
+HC6 <- HC6[!grepl("XIST", rownames(HC6)), ]
+HC6 <- HC6[!grepl("RSP4Y1", rownames(HC6)), ]
+HC6 <- HC6[grep("^RP[SL][[:digit:]]|^RPLP[[:digit:]]|^RPSA", rownames(HC6), value = T, invert = T), ]
+rm(HC6.data)
+
+HC7.data <- Read10X(data.dir = "/mnt/RAID_5/vincent/Project-Kawasaki_Disease/2021_DatafromGEO_GSE_GSE166489-MISC-HC/HC4/")
+#Create Seurat object
+HC7 <- CreateSeuratObject(counts = HC7.data, project = "HC7", min.cells = 3, min.features = 100)
+#Standard pre-processing workflow
+HC7[["percent.mt"]] <- PercentageFeatureSet(HC7, pattern = "^MT-")
+HC7 <- subset(HC7, subset = nFeature_RNA > 100 & nFeature_RNA < 5000 & percent.mt < 15)
+#Removal of Ribosomal Genes
+HC7 <- HC7[!grepl("^MT-", rownames(HC7)), ] #MT genes are already removed but the column of its percent.mt values remain
+HC7 <- HC7[!grepl("MALAT1", rownames(HC7)), ]
+HC7 <- HC7[!grepl("XIST", rownames(HC7)), ]
+HC7 <- HC7[!grepl("RSP4Y1", rownames(HC7)), ]
+HC7 <- HC7[grep("^RP[SL][[:digit:]]|^RPLP[[:digit:]]|^RPSA", rownames(HC7), value = T, invert = T), ]
+rm(HC7.data)
+
+HC8.data <- Read10X(data.dir = "/mnt/RAID_5/vincent/Project-Kawasaki_Disease/2021_DatafromGEO_GSE_GSE166489-MISC-HC/HC5/")
+#Create Seurat object
+HC8 <- CreateSeuratObject(counts = HC8.data, project = "HC8", min.cells = 3, min.features = 100)
+#Standard pre-processing workflow
+HC8[["percent.mt"]] <- PercentageFeatureSet(HC8, pattern = "^MT-")
+HC8 <- subset(HC8, subset = nFeature_RNA > 100 & nFeature_RNA < 5000 & percent.mt < 15)
+#Removal of Ribosomal Genes
+HC8 <- HC8[!grepl("^MT-", rownames(HC8)), ] #MT genes are already removed but the column of its percent.mt values remain
+HC8 <- HC8[!grepl("MALAT1", rownames(HC8)), ]
+HC8 <- HC8[!grepl("XIST", rownames(HC8)), ]
+HC8 <- HC8[!grepl("RSP4Y1", rownames(HC8)), ]
+HC8 <- HC8[grep("^RP[SL][[:digit:]]|^RPLP[[:digit:]]|^RPSA", rownames(HC8), value = T, invert = T), ]
+rm(HC8.data)
+
+HC9.data <- Read10X(data.dir = "/mnt/RAID_5/vincent/Project-Kawasaki_Disease/2021_DatafromGEO_GSE_GSE166489-MISC-HC/HD6/HD6/")
+#Create Seurat object
+HC9 <- CreateSeuratObject(counts = HC9.data, project = "HC9", min.cells = 3, min.features = 100)
+#Standard pre-processing workflow
+HC9[["percent.mt"]] <- PercentageFeatureSet(HC9, pattern = "^MT-")
+HC9 <- subset(HC9, subset = nFeature_RNA > 100 & nFeature_RNA < 5000 & percent.mt < 15)
+#Removal of Ribosomal Genes
+HC9 <- HC9[!grepl("^MT-", rownames(HC9)), ] #MT genes are already removed but the column of its percent.mt values remain
+HC9 <- HC9[!grepl("MALAT1", rownames(HC9)), ]
+HC9 <- HC9[!grepl("XIST", rownames(HC9)), ]
+HC9 <- HC9[!grepl("RSP4Y1", rownames(HC9)), ]
+HC9 <- HC9[grep("^RP[SL][[:digit:]]|^RPLP[[:digit:]]|^RPSA", rownames(HC9), value = T, invert = T), ]
+rm(HC9.data)
+
+
+
+
+
+
+
+dim(KD1) # 5k
+dim(KD2) # 3.8k
+dim(KD3) # 5.5k
+
+
+VlnPlot(KD1, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"))
+VlnPlot(KD2, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"))
+VlnPlot(KD3, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"))
+
+
+KD1 <- AddMetaData(object = KD1, metadata = "KD1", col.name = "individual") # Acute
+KD2 <- AddMetaData(object = KD2, metadata = "KD2", col.name = "individual") # Acute
+KD3 <- AddMetaData(object = KD3, metadata = "KD3", col.name = "individual") # Acute
+HC4 <- AddMetaData(object = HC4, metadata = "HC4", col.name = "individual") # Acute
+HC5 <- AddMetaData(object = HC5, metadata = "HC5", col.name = "individual") # Acute
+HC6 <- AddMetaData(object = HC6, metadata = "HC6", col.name = "individual") # Acute
+HC7 <- AddMetaData(object = HC7, metadata = "HC7", col.name = "individual") # Acute
+HC8 <- AddMetaData(object = HC8, metadata = "HC8", col.name = "individual") # Acute
+HC9 <- AddMetaData(object = HC9, metadata = "HC9", col.name = "individual") # Acute
+
+
+KD1 <- AddMetaData(object = KD1, metadata = "KD", col.name = "group") # Acute
+KD2 <- AddMetaData(object = KD2, metadata = "KD", col.name = "group") # Acute
+KD3 <- AddMetaData(object = KD3, metadata = "KD", col.name = "group") # Acute
+HC4 <- AddMetaData(object = HC4, metadata = "HC", col.name = "group") # Acute
+HC5 <- AddMetaData(object = HC5, metadata = "HC", col.name = "group") # Acute
+HC6 <- AddMetaData(object = HC6, metadata = "HC", col.name = "group") # Acute
+HC7 <- AddMetaData(object = HC7, metadata = "HC", col.name = "group") # Acute
+HC8 <- AddMetaData(object = HC8, metadata = "HC", col.name = "group") # Acute
+HC9 <- AddMetaData(object = HC9, metadata = "HC", col.name = "group") # Acute
+
+
+### REMOVE DOUBLETS: https://nbisweden.github.io/workshop-scRNAseq/labs/compiled/seurat/seurat_01_qc.html#Predict_doublets
+suppressMessages(require(DoubletFinder))
+
+#### Only run the data one by one:
+KD1 <- A
+KD2 <- A
+KD3 <- A
+HC4 <- A
+HC5 <- A
+HC6 <- A
+HC7 <- A
+HC8 <- A 
+HC9 <- A 
+
+##### RUN
+A <- NormalizeData(A)
+A <- FindVariableFeatures(A, selection.method = "vst", nfeatures = 3000) # this should be all genes!!!
+A <- ScaleData(A)
+A <- RunPCA(A)
+A <- RunUMAP(A, dims = 1:10)
+
+A <- KD1 # 5K -- 0.039
+A <- KD2 # 3k 0.023
+A <- KD3 # 5k 0.039
+
+## Can run parameter optimization with paramSweep
+## Can run parameter optimization with paramSweep
+sweep.res <- paramSweep_v3(A)
+sweep.stats <- summarizeSweep(sweep.res, GT = FALSE)
+bcmvn <- find.pK(sweep.stats)
+#barplot(bcmvn$BCmetric, names.arg = bcmvn$pK, las=2)
+
+
+## define the expected number of doublets
+## define the expected number of doublets
+nExp <- round(ncol(A) * 0.004)
+nExp <- round(ncol(A) * 0.008)
+nExp <- round(ncol(A) * 0.016)
+nExp <- round(ncol(A) * 0.023)
+nExp <- round(ncol(A) * 0.031)
+nExp <- round(ncol(A) * 0.039)
+nExp <- round(ncol(A) * 0.046)
+nExp <- round(ncol(A) * 0.054)
+nExp <- round(ncol(A) * 0.061)
+nExp <- round(ncol(A) * 0.069)
+nExp <- round(ncol(A) * 0.076)
+
+
+A <- doubletFinder_v3(A, pN = 0.25, pK = 0.09, nExp = nExp, PCs = 1:10)
+### name of the DF prediction can change, so extract the correct column name.
+DF.name = colnames(A@meta.data)[grepl("DF.classification", colnames(A@meta.data))]
+cowplot::plot_grid(ncol = 2, DimPlot(A, group.by = "orig.ident") + NoAxes(),
+                   DimPlot(A, group.by = DF.name) + NoAxes())
+### Check, in general, how many genes --  Singlet vs Doublet
+#VlnPlot(A, features = "nFeature_RNA", group.by = DF.name, pt.size = 0.1)
+
+### Now, lets remove all predicted doublets from our data.
+A = A[, A@meta.data[, DF.name] == "Singlet"]
+any(A@meta.data=="Doublet")
+
+
+### Back to original object name
+
+KD1 <- A
+KD2 <- A
+KD3 <- A
+HC4 <- A
+HC5 <- A
+HC6 <- A
+HC7 <- A
+HC8 <- A 
+HC9 <- A 
+
+rm(A, bcmvn, DF.name, nExp, sweep.res, sweep.stats, list)
