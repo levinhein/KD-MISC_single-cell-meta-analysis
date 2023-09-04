@@ -215,15 +215,15 @@ HC9 <- AddMetaData(object = HC9, metadata = "HC", col.name = "group") # Acute
 suppressMessages(require(DoubletFinder))
 
 #### Only run the data one by one:
-KD1 <- A
-KD2 <- A
-KD3 <- A
-HC4 <- A
-HC5 <- A
-HC6 <- A
-HC7 <- A
-HC8 <- A 
-HC9 <- A 
+A <- KD1
+A <- KD2 
+A <- KD3 
+A <- HC4 
+A <- HC5 
+A <- HC6 
+A <- HC7
+A <- HC8
+A <- HC9
 
 ##### RUN
 A <- NormalizeData(A)
