@@ -1,5 +1,8 @@
 # KD-MISC_single-cell-meta-analysis
 Analysis scripts for the manuscript "Single-cell Meta-analysis Of Neutrophil Activation in Kawasaki Disease and Multi-system Inflammatory Syndrome in Children"
+Disease Molecular Mechanism Investigation
+Lead Target Discovery
+Therapeutic Drug Identification
 
 
 # Folder Structure
